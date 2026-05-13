@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Garderie - Tâches et Étoiles</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;background:#FFF8F0;min-height:100vh;}
+
+.top-bar{background:linear-gradient(135deg,#FF6B9D,#FF8C42);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+.top-bar h1{color:white;font-size:20px;font-weight:700;}
+.top-bar .date{color:rgba(255,255,255,0.9);font-size:12px;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;}
+
+.kids-overview{background:white;padding:16px;border-bottom:3px solid #FFE0CC;}
+.kids-overview-title{font-size:12px;font-weight:700;color:#aaa;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;}
+.kids-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+@media(max-width:600px){.kids-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:380px){.kids-grid{grid-template-columns:repeat(2,1fr);}}
+
+.kid-card{background:#FFF8F0;border:2.5px solid #FFD4B0;border-radius:16px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.kid-card:hover{transform:translateY(-3px);border-color:#FF8C42;}
+.kid-card.active{transform:translateY(-4px);}
+.kid-avatar{font-size:30px;margin-bottom:4px;line-height:1;}
+.kid-name{font-size:12px;font-weight:700;color:#2d2d2d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kid-age{font-size:10px;color:#bbb;margin-top:1px;}
+.kid-stars{font-size:14px;margin-top:5px;font-weight:700;color:#E67E00;}
+.kid-prog-bar{background:#ffe8d6;border-radius:6px;height:6px;margin-top:6px;overflow:hidden;}
+.kid-prog-fill{height:100%;border-radius:6px;transition:width .4s;}
+.kid-tasks-count{font-size:10px;color:#aaa;margin-top:3px;}
+.kid-all-done{position:absolute;top:-7px;right:-7px;background:#4CAF50;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid white;}
+
+.global-summary{background:white;padding:12px 16px;display:flex;gap:10px;border-bottom:2px solid #FFE0CC;flex-wrap:wrap;}
+.g-card{flex:1;min-width:60px;text-align:center;background:#FFF8F0;border-radius:10px;padding:8px 4px;border:1.5px solid #FFD4B0;}
+.g-num{font-size:20px;font-weight:700;}
+.g-label{font-size:10px;color:#888;margin-top:1px;}
+
+.main{padding:16px;max-width:720px;margin:0 auto;}
+
+.child-card{background:white;border-radius:20px;padding:16px;margin-bottom:14px;border:2px solid #FFD4B0;display:flex;align-items:center;gap:14px;}
+.avatar-big{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+.child-info{flex:1;}
+.child-name-row{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.child-name-big{font-size:18px;font-weight:700;color:#2d2d2d;}
+.age-badge{background:#FFE0CC;color:#C84B00;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:600;}
+.stars-row{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.stars-count{font-size:12px;color:#888;}
+.reward-progress{font-size:12px;color:#FF8C42;font-weight:600;margin-top:3px;}
+.edit-btn{background:none;border:1.5px solid #ddd;border-radius:10px;padding:6px 12px;font-size:12px;color:#666;cursor:pointer;}
+.edit-btn:hover{background:#f5f5f5;}
+
+.prog-wrap{margin-bottom:14px;}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:5px;}
+.prog-bar{background:#ffe8d6;border-radius:10px;height:10px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:10px;transition:width .5s;}
+
+.section-title{font-size:14px;font-weight:700;color:#555;margin-bottom:10px;}
+.tasks-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.task-item{display:flex;align-items:center;gap:12px;padding:13px 14px;background:white;border-radius:14px;border:2px solid #F0F0F0;cursor:pointer;transition:all .15s;user-select:none;}
+.task-item:hover{border-color:#FFD4B0;transform:translateY(-1px);}
+.task-item.done{background:#F0FBF5;border-color:#A8E6C0;}
+.task-item.done .task-name{color:#2d7a4a;text-decoration:line-through;}
+.task-icon-big{font-size:28px;flex-shrink:0;}
+.task-info{flex:1;}
+.task-name{font-size:14px;font-weight:600;color:#2d2d2d;}
+.task-time-pill{font-size:10px;background:#FFF3E0;color:#E65100;border-radius:6px;padding:2px 7px;margin-top:3px;display:inline-block;font-weight:600;}
+.check-big{width:30px;height:30px;border-radius:50%;border:2.5px solid #ddd;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;}
+.check-big.checked{background:#4CAF50;border-color:#4CAF50;color:white;}
+.del-btn{background:none;border:none;font-size:18px;color:#ddd;cursor:pointer;padding:0 4px;}
+.del-btn:hover{color:#f44336;}
+
+.rewards-section{background:white;border-radius:18px;padding:16px;margin-bottom:14px;border:2px solid #FFD4B0;}
+.rewards-title{font-size:14px;font-weight:700;color:#2d2d2d;margin-bottom:12px;}
+.rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;}
+.reward-card{background:#FFF8F0;border:2px solid #FFD4B0;border-radius:12px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;}
+.reward-card:hover{border-color:#FF8C42;transform:translateY(-2px);}
+.reward-card.unlocked{background:#FFF3CD;border-color:#FFC107;}
+.reward-card.claimed{background:#E8F5E9;border-color:#4CAF50;}
+.reward-icon{font-size:26px;margin-bottom:4px;}
+.reward-name{font-size:11px;font-weight:700;color:#2d2d2d;}
+.reward-cost{font-size:10px;color:#FF8C42;margin-top:2px;font-weight:600;}
+.reward-status{font-size:10px;font-weight:700;margin-top:3px;}
+
+.add-box{background:white;border-radius:14px;padding:14px;border:2px solid #FFD4B0;margin-bottom:14px;}
+.add-box h3{font-size:13px;font-weight:700;color:#555;margin-bottom:10px;}
+.add-row{display:flex;gap:8px;flex-wrap:wrap;}
+.add-row input,.add-row select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;background:white;}
+.add-row input{flex:1;min-width:140px;}
+.add-row input:focus,.add-row select:focus{border-color:#FF8C42;}
+.add-row button{padding:8px 16px;background:#FF8C42;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.add-row button:hover{background:#E67030;}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.btn-reset{flex:1;padding:9px;background:white;border:1.5px solid #ddd;border-radius:10px;font-size:12px;color:#666;cursor:pointer;font-weight:600;}
+.btn-reset:hover{background:#f5f5f5;}
+.btn-reset-all{flex:1;padding:9px;background:white;border:1.5px solid #ffaaaa;border-radius:10px;font-size:12px;color:#e53935;cursor:pointer;font-weight:600;}
+.btn-reset-all:hover{background:#fff5f5;}
+
+.celebrate{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:24px;padding:28px 36px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);z-index:200;display:none;}
+.celebrate.show{display:block;animation:popIn .3s ease;}
+@keyframes popIn{from{transform:translate(-50%,-50%) scale(0.5);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.celebrate-icon{font-size:60px;margin-bottom:10px;}
+.celebrate-text{font-size:20px;font-weight:700;color:#2d2d2d;margin-bottom:4px;}
+.celebrate-sub{font-size:14px;color:#888;margin-bottom:18px;}
+.celebrate-close{background:#FF8C42;color:white;border:none;border-radius:10px;padding:9px 28px;font-size:14px;font-weight:700;cursor:pointer;}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:white;border-radius:20px;padding:22px;width:320px;box-shadow:0 20px 40px rgba(0,0,0,0.15);}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:12px;color:#2d2d2d;}
+.modal input,.modal select{width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:10px;outline:none;}
+.modal input:focus,.modal select:focus{border-color:#FF8C42;}
+.modal-btns{display:flex;gap:8px;}
+.modal-btns button{flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;}
+.btn-cancel{background:#f5f5f5;color:#666;}
+.btn-ok{background:#FF8C42;color:white;}
+.empty-msg{text-align:center;padding:20px;color:#aaa;font-size:13px;}
+
+/* ONGLETS NAVIGATION */
+.nav-tabs{background:white;display:flex;border-bottom:3px solid #FFE0CC;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.nav-tabs::-webkit-scrollbar{display:none;}
+.nav-tab{flex:0 0 auto;padding:10px 10px;text-align:center;font-size:11px;font-weight:700;color:#aaa;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-3px;transition:all .15s;white-space:nowrap;}
+.nav-tab:hover{color:#FF8C42;background:#FFF8F0;}
+.nav-tab.active{color:#FF8C42;border-bottom-color:#FF8C42;}
+
+/* MENU DU JOUR */
+.menu-page{padding:16px;max-width:720px;margin:0 auto;}
+.menu-date-bar{background:linear-gradient(135deg,#FF8C42,#FF6B9D);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.menu-date-title{color:white;font-size:16px;font-weight:700;}
+.menu-date-sub{color:rgba(255,255,255,0.85);font-size:12px;}
+.menu-section{background:white;border-radius:18px;padding:18px;margin-bottom:14px;border:2px solid #FFD4B0;}
+.menu-section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.menu-section-icon{font-size:32px;}
+.menu-section-title{font-size:16px;font-weight:700;color:#2d2d2d;}
+.menu-section-time{font-size:11px;font-weight:600;border-radius:8px;padding:2px 8px;margin-left:auto;}
+.menu-item-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FFF8F0;border-radius:12px;margin-bottom:8px;border:1.5px solid #FFE0CC;}
+.menu-item-emoji{font-size:22px;flex-shrink:0;}
+.menu-item-name{flex:1;font-size:14px;font-weight:600;color:#2d2d2d;}
+.menu-item-allergen{font-size:10px;color:#888;margin-top:2px;}
+.menu-edit-btn{background:none;border:1px solid #ddd;border-radius:6px;padding:3px 8px;font-size:11px;color:#888;cursor:pointer;}
+.menu-edit-btn:hover{background:#f5f5f5;}
+.menu-add-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.menu-add-row input{flex:1;min-width:140px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;}
+.menu-add-row input:focus{border-color:#FF8C42;}
+.menu-add-row button{padding:8px 14px;background:#FF8C42;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.menu-add-row button:hover{background:#E67030;}
+.menu-del-btn{background:none;border:none;font-size:16px;color:#ddd;cursor:pointer;}
+.menu-del-btn:hover{color:#f44336;}
+.menu-empty{text-align:center;padding:16px;color:#ccc;font-size:13px;}
+.menu-nav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.menu-day-btn{padding:8px 14px;border-radius:20px;border:1.5px solid #FFD4B0;background:white;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:all .15s;}
+.menu-day-btn:hover{border-color:#FF8C42;color:#FF8C42;}
+.menu-day-btn.active{background:#FF8C42;color:white;border-color:#FF8C42;}
+
+/* ANNIVERSAIRES */
+.bday-page{padding:16px;max-width:720px;margin:0 auto;}
+.bday-banner{background:linear-gradient(135deg,#9C27B0,#FF6B9D);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.bday-banner-title{color:white;font-size:16px;font-weight:700;}
+.bday-banner-sub{color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;}
+.bday-alert{background:#FFF3CD;border:2px solid #FFC107;border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+.bday-alert-icon{font-size:36px;flex-shrink:0;}
+.bday-alert-text{flex:1;}
+.bday-alert-name{font-size:15px;font-weight:700;color:#2d2d2d;}
+.bday-alert-days{font-size:13px;color:#856404;margin-top:2px;}
+.bday-alert.today{background:#E8F5E9;border-color:#4CAF50;}
+.bday-alert.today .bday-alert-days{color:#1B5E20;}
+.bday-grid{display:flex;flex-direction:column;gap:10px;}
+.bday-card{background:white;border-radius:16px;padding:14px 16px;border:2px solid #FFD4B0;display:flex;align-items:center;gap:14px;transition:all .2s;}
+.bday-card.soon{border-color:#FFC107;background:#FFFDE7;}
+.bday-card.today-bday{border-color:#4CAF50;background:#F1F8E9;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(76,175,80,0.3)}50%{box-shadow:0 0 0 8px rgba(76,175,80,0)}}
+.bday-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.bday-info{flex:1;}
+.bday-name{font-size:15px;font-weight:700;color:#2d2d2d;}
+.bday-date{font-size:12px;color:#888;margin-top:2px;}
+.bday-countdown{font-size:12px;font-weight:700;border-radius:20px;padding:4px 12px;margin-top:4px;display:inline-block;}
+.bday-countdown.far{background:#F5F5F5;color:#888;}
+.bday-countdown.week{background:#FFF3CD;color:#856404;}
+.bday-countdown.soon2{background:#FFE0B2;color:#E65100;}
+.bday-countdown.today2{background:#E8F5E9;color:#1B5E20;}
+.bday-edit-btn{background:none;border:1px solid #ddd;border-radius:8px;padding:5px 10px;font-size:11px;color:#888;cursor:pointer;}
+.bday-edit-btn:hover{background:#f5f5f5;}
+.bday-no-date{font-size:11px;color:#ccc;font-style:italic;}
+.bday-age-next{font-size:11px;color:#9C27B0;font-weight:600;margin-top:2px;}
+</style>
+
+/* ========== JOURNAL / NOTES ========== */
+.journal-page{padding:16px;max-width:720px;margin:0 auto;}
+.journal-banner{background:linear-gradient(135deg,#5C6BC0,#7E57C2);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.journal-banner-title{color:white;font-size:16px;font-weight:700;}
+.journal-banner-sub{color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;}
+.journal-child-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.journal-child-btn{padding:7px 12px;border-radius:20px;border:1.5px solid #ddd;background:white;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:all .15s;}
+.journal-child-btn.active{background:#5C6BC0;color:white;border-color:#5C6BC0;}
+.journal-entry-box{background:white;border-radius:14px;padding:16px;border:2px solid #D1C4E9;margin-bottom:14px;}
+.journal-entry-box h3{font-size:13px;font-weight:700;color:#5C6BC0;margin-bottom:10px;}
+.journal-textarea{width:100%;min-height:100px;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none;resize:vertical;font-family:inherit;}
+.journal-textarea:focus{border-color:#7E57C2;}
+.journal-save-btn{margin-top:8px;padding:8px 20px;background:#5C6BC0;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.journal-save-btn:hover{background:#3949AB;}
+.journal-history{background:white;border-radius:14px;padding:16px;border:2px solid #D1C4E9;}
+.journal-history h3{font-size:13px;font-weight:700;color:#5C6BC0;margin-bottom:10px;}
+.journal-item{background:#F3F0FF;border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid #7E57C2;}
+.journal-item-date{font-size:10px;color:#9E9E9E;margin-bottom:4px;}
+.journal-item-child{font-size:11px;font-weight:700;color:#5C6BC0;margin-bottom:4px;}
+.journal-item-text{font-size:13px;color:#2d2d2d;line-height:1.5;}
+.journal-item-del{float:right;background:none;border:none;color:#ddd;cursor:pointer;font-size:14px;}
+.journal-item-del:hover{color:#f44336;}
+
+/* ========== ACTIVITÉS ========== */
+.activities-page{padding:16px;max-width:720px;margin:0 auto;}
+.activities-banner{background:linear-gradient(135deg,#26C6DA,#00897B);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.activities-banner-title{color:white;font-size:16px;font-weight:700;}
+.activities-banner-sub{color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;}
+.activity-add-box{background:white;border-radius:14px;padding:16px;border:2px solid #B2EBF2;margin-bottom:14px;}
+.activity-add-box h3{font-size:13px;font-weight:700;color:#00897B;margin-bottom:10px;}
+.activity-form{display:flex;flex-direction:column;gap:8px;}
+.activity-form input,.activity-form select{padding:9px 11px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;}
+.activity-form input:focus,.activity-form select:focus{border-color:#26C6DA;}
+.activity-form-row{display:flex;gap:8px;flex-wrap:wrap;}
+.activity-form-row input,.activity-form-row select{flex:1;min-width:120px;}
+.activity-add-btn{padding:9px;background:#00897B;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.activity-add-btn:hover{background:#00695C;}
+.activity-list{display:flex;flex-direction:column;gap:8px;}
+.activity-card{background:white;border-radius:14px;padding:14px;border:2px solid #B2EBF2;display:flex;align-items:flex-start;gap:12px;}
+.activity-card.done-act{background:#E0F7FA;border-color:#80DEEA;}
+.activity-icon{font-size:28px;flex-shrink:0;}
+.activity-info{flex:1;}
+.activity-name{font-size:14px;font-weight:700;color:#2d2d2d;}
+.activity-meta{font-size:11px;color:#888;margin-top:3px;}
+.activity-meta span{background:#E0F7FA;color:#00695C;border-radius:6px;padding:2px 7px;margin-right:4px;font-weight:600;}
+.activity-desc{font-size:12px;color:#666;margin-top:5px;}
+.activity-actions{display:flex;gap:6px;margin-top:8px;}
+.activity-done-btn{padding:4px 10px;border-radius:6px;border:1px solid #80DEEA;background:white;font-size:11px;color:#00897B;cursor:pointer;font-weight:600;}
+.activity-done-btn.done{background:#4CAF50;color:white;border-color:#4CAF50;}
+.activity-del-btn{padding:4px 8px;border-radius:6px;border:1px solid #ffcccc;background:white;font-size:11px;color:#f44336;cursor:pointer;}
+
+/* ========== CONTACTS ========== */
+.contacts-page{padding:16px;max-width:720px;margin:0 auto;}
+.contacts-banner{background:linear-gradient(135deg,#FF7043,#F06292);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.contacts-banner-title{color:white;font-size:16px;font-weight:700;}
+.contact-add-box{background:white;border-radius:14px;padding:16px;border:2px solid #FFCCBC;margin-bottom:14px;}
+.contact-add-box h3{font-size:13px;font-weight:700;color:#FF7043;margin-bottom:10px;}
+.contact-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:400px){.contact-form{grid-template-columns:1fr;}}
+.contact-form input,.contact-form select{padding:9px 11px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;}
+.contact-form input:focus,.contact-form select:focus{border-color:#FF7043;}
+.contact-form-full{grid-column:1/-1;}
+.contact-add-btn{grid-column:1/-1;padding:9px;background:#FF7043;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.contact-add-btn:hover{background:#E64A19;}
+.contact-child-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.contact-filter-btn{padding:6px 12px;border-radius:20px;border:1.5px solid #ddd;background:white;font-size:11px;font-weight:600;color:#888;cursor:pointer;}
+.contact-filter-btn.active{background:#FF7043;color:white;border-color:#FF7043;}
+.contact-card{background:white;border-radius:14px;padding:14px;border:2px solid #FFCCBC;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.contact-avatar{width:46px;height:46px;border-radius:50%;background:#FFCCBC;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;font-weight:700;color:#FF7043;}
+.contact-info{flex:1;}
+.contact-name{font-size:14px;font-weight:700;color:#2d2d2d;}
+.contact-relation{font-size:11px;background:#FFF3E0;color:#E65100;border-radius:6px;padding:2px 7px;font-weight:600;margin-left:6px;}
+.contact-child-tag{font-size:10px;background:#FFCCBC;color:#BF360C;border-radius:6px;padding:2px 6px;font-weight:600;margin-top:3px;display:inline-block;}
+.contact-phone{font-size:13px;color:#555;margin-top:4px;}
+.contact-phone a{color:#FF7043;text-decoration:none;font-weight:600;}
+.contact-del{background:none;border:none;color:#ddd;cursor:pointer;font-size:18px;}
+.contact-del:hover{color:#f44336;}
+
+/* ========== SANTÉ ========== */
+.sante-page{padding:16px;max-width:720px;margin:0 auto;}
+.sante-banner{background:linear-gradient(135deg,#EF5350,#EC407A);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.sante-banner-title{color:white;font-size:16px;font-weight:700;}
+.sante-child-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.sante-child-btn{padding:7px 12px;border-radius:20px;border:1.5px solid #ddd;background:white;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:all .15s;}
+.sante-child-btn.active{background:#EF5350;color:white;border-color:#EF5350;}
+.sante-section{background:white;border-radius:14px;padding:16px;border:2px solid #FFCDD2;margin-bottom:12px;}
+.sante-section h3{font-size:13px;font-weight:700;color:#C62828;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.sante-add-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.sante-add-row input,.sante-add-row select{flex:1;min-width:120px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;}
+.sante-add-row input:focus{border-color:#EF5350;}
+.sante-add-row button{padding:8px 14px;background:#EF5350;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.sante-add-row button:hover{background:#C62828;}
+.sante-tag{display:inline-flex;align-items:center;gap:6px;background:#FFEBEE;border:1.5px solid #FFCDD2;border-radius:20px;padding:5px 12px;margin:3px;font-size:12px;font-weight:600;color:#C62828;}
+.sante-tag.allergie{background:#FFF3E0;border-color:#FFE0B2;color:#E65100;}
+.sante-tag.medicament{background:#E8F5E9;border-color:#C8E6C9;color:#2E7D32;}
+.sante-tag.note{background:#E3F2FD;border-color:#BBDEFB;color:#1565C0;}
+.sante-tag button{background:none;border:none;color:inherit;cursor:pointer;font-size:12px;opacity:0.6;padding:0;line-height:1;}
+.sante-tag button:hover{opacity:1;}
+.sante-tags-wrap{display:flex;flex-wrap:wrap;min-height:36px;align-items:center;}
+
+/* ========== RAPPORT ========== */
+.rapport-page{padding:16px;max-width:720px;margin:0 auto;}
+.rapport-banner{background:linear-gradient(135deg,#558B2F,#F9A825);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.rapport-banner-title{color:white;font-size:16px;font-weight:700;}
+.rapport-banner-sub{color:rgba(255,255,255,0.9);font-size:12px;margin-top:2px;}
+.rapport-week-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px;background:white;border-radius:12px;padding:10px 14px;border:2px solid #DCEDC8;}
+.rapport-week-nav button{background:none;border:1.5px solid #ddd;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:600;}
+.rapport-week-nav button:hover{background:#f5f5f5;}
+.rapport-week-label{flex:1;text-align:center;font-size:13px;font-weight:700;color:#558B2F;}
+.rapport-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+.rapport-stat{background:white;border-radius:14px;padding:14px;text-align:center;border:2px solid #DCEDC8;}
+.rapport-stat-num{font-size:28px;font-weight:700;}
+.rapport-stat-label{font-size:11px;color:#888;margin-top:3px;}
+.rapport-child-table{background:white;border-radius:14px;padding:16px;border:2px solid #DCEDC8;margin-bottom:12px;overflow-x:auto;}
+.rapport-child-table h3{font-size:13px;font-weight:700;color:#558B2F;margin-bottom:12px;}
+.rapport-table{width:100%;border-collapse:collapse;font-size:12px;}
+.rapport-table th{background:#F1F8E9;padding:8px;text-align:left;font-weight:700;color:#558B2F;border-bottom:2px solid #DCEDC8;}
+.rapport-table td{padding:9px 8px;border-bottom:1px solid #f0f0f0;color:#2d2d2d;}
+.rapport-table tr:last-child td{border-bottom:none;}
+.rapport-bar-cell{min-width:80px;}
+.rapport-bar{background:#DCEDC8;border-radius:6px;height:8px;overflow:hidden;}
+.rapport-bar-fill{height:100%;border-radius:6px;background:#558B2F;}
+.export-pdf-btn{width:100%;padding:12px;background:linear-gradient(135deg,#FF8C42,#FF6B9D);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;}
+.export-pdf-btn:hover{opacity:0.9;}
+
+/* ========== FOURNITURES ========== */
+.fournitures-page{padding:16px;max-width:720px;margin:0 auto;}
+.fournitures-banner{background:linear-gradient(135deg,#1565C0,#6A1B9A);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.fournitures-banner-title{color:white;font-size:16px;font-weight:700;}
+.fournitures-section{background:white;border-radius:14px;padding:16px;border:2px solid #BBDEFB;margin-bottom:12px;}
+.fournitures-section h3{font-size:13px;font-weight:700;color:#1565C0;margin-bottom:10px;}
+.fournitures-add-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.fournitures-add-row input,.fournitures-add-row select{flex:1;min-width:120px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;}
+.fournitures-add-row input:focus{border-color:#1565C0;}
+.fournitures-add-row button{padding:8px 14px;background:#1565C0;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.fournitures-add-row button:hover{background:#0D47A1;}
+.fournitures-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#F8F9FF;border-radius:10px;margin-bottom:6px;border:1.5px solid #E3F2FD;}
+.fournitures-item.checked-item{background:#E8F5E9;border-color:#C8E6C9;}
+.fournitures-item.checked-item .fournitures-name{text-decoration:line-through;color:#aaa;}
+.fournitures-check{width:22px;height:22px;border-radius:6px;border:2px solid #ddd;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .15s;}
+.fournitures-check.on{background:#4CAF50;border-color:#4CAF50;color:white;}
+.fournitures-name{flex:1;font-size:13px;font-weight:600;color:#2d2d2d;}
+.fournitures-qty{font-size:11px;background:#E3F2FD;color:#1565C0;border-radius:6px;padding:2px 7px;font-weight:700;}
+.fournitures-cat{font-size:10px;background:#EDE7F6;color:#6A1B9A;border-radius:6px;padding:2px 6px;font-weight:600;margin-left:4px;}
+.fournitures-del{background:none;border:none;color:#ddd;cursor:pointer;font-size:16px;}
+.fournitures-del:hover{color:#f44336;}
+.fournitures-progress{margin-bottom:12px;}
+.fournitures-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.fournitures-filter-btn{padding:5px 10px;border-radius:16px;border:1.5px solid #ddd;background:white;font-size:11px;font-weight:600;color:#888;cursor:pointer;}
+.fournitures-filter-btn.active{background:#1565C0;color:white;border-color:#1565C0;}
+
+/* ========== AVATAR UPLOAD ========== */
+.avatar-upload-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:10px;}
+.avatar-preview{width:70px;height:70px;border-radius:50%;border:3px solid #FFD4B0;display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;background:#FFF8F0;cursor:pointer;}
+.avatar-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.avatar-upload-label{font-size:11px;color:#FF8C42;font-weight:600;cursor:pointer;text-decoration:underline;}
+#avatar-file-input{display:none;}
+.avatar-tabs{display:flex;gap:8px;margin-bottom:10px;}
+.avatar-tab{flex:1;padding:6px;border-radius:8px;border:1.5px solid #ddd;background:white;font-size:11px;font-weight:700;cursor:pointer;text-align:center;}
+.avatar-tab.active{background:#FF8C42;color:white;border-color:#FF8C42;}
+.emoji-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px;}
+.emoji-opt{font-size:24px;padding:6px;border-radius:8px;border:1.5px solid #ddd;background:white;cursor:pointer;text-align:center;}
+.emoji-opt:hover,.emoji-opt.selected{border-color:#FF8C42;background:#FFF3E0;}
+
+/* ========== TÂCHES RÉCURRENTES ========== */
+.templates-box{background:white;border-radius:14px;padding:14px;border:2px dashed #FFD4B0;margin-bottom:14px;}
+.templates-box h3{font-size:13px;font-weight:700;color:#555;margin-bottom:10px;}
+.templates-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.template-chip{padding:6px 12px;border-radius:20px;border:1.5px solid #FFD4B0;background:#FFF8F0;font-size:11px;font-weight:600;color:#FF8C42;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;}
+.template-chip:hover{background:#FF8C42;color:white;border-color:#FF8C42;}
+.template-chip .chip-icon{font-size:14px;}
+</style>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script>
+// ── FIREBASE OVERRIDE FINAL (remplace localStorage) ──────────
+function save() {
+  if (currentUserRole === 'admin') {
+    saveToFirestore();
+  } else {
+    try { localStorage.setItem('garderie_v5', JSON.stringify(state)); } catch(e) {}
+  }
+}
+
+function saveExtra(key, val) {
+  if (currentUserRole === 'admin') {
+    saveExtraToFirestore(key, val);
+    try { localStorage.setItem('gard_'+key, JSON.stringify(val)); } catch(e) {}
+  }
+}
+
+function loadExtra(key, def) {
+  try {
+    const s = localStorage.getItem('gard_'+key);
+    const cached = s ? JSON.parse(s) : def;
+    if (currentUserRole === 'admin') {
+      loadExtraFromFirestore(key, def).then(fresh => {
+        if (JSON.stringify(fresh) !== JSON.stringify(cached)) {
+          localStorage.setItem('gard_'+key, JSON.stringify(fresh));
+          const tab = document.querySelector('.nav-tab.active');
+          if (tab) {
+            const p = tab.id.replace('tab-','');
+            if (['menu','journal','activites','contacts','sante','rapport','fournitures'].includes(p)) showPage(p);
+          }
+        }
+      }).catch(()=>{});
+    }
+    return cached;
+  } catch(e) { return def; }
+}
+
+function load() {
+  try {
+    const s = localStorage.getItem('garderie_v5');
+    if (s) state = JSON.parse(s);
+    else {
+      const old2 = localStorage.getItem('garderie_v4');
+      if (old2) { state = JSON.parse(old2); state.children.forEach(c => { if (!c.photo) c.photo = null; }); }
+    }
+  } catch(e) {}
+}
+</script>
+
+<style>
+/* AUTH SCREEN */
+#auth-screen{position:fixed;inset:0;background:linear-gradient(135deg,#FF6B9D,#FF8C42);display:flex;align-items:center;justify-content:center;z-index:9999;}
+#auth-screen.hidden{display:none;}
+.auth-card{background:white;border-radius:24px;padding:32px 28px;width:340px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;}
+.auth-logo{font-size:56px;margin-bottom:8px;}
+.auth-title{font-size:22px;font-weight:700;color:#2d2d2d;margin-bottom:12px;}
+.auth-sub{font-size:13px;color:#aaa;margin-bottom:14px;}
+.auth-input{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;outline:none;margin-bottom:10px;box-sizing:border-box;}
+.auth-input:focus{border-color:#FF8C42;}
+.auth-btn{width:100%;padding:12px;background:linear-gradient(135deg,#FF6B9D,#FF8C42);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.auth-btn:hover{opacity:0.9;}
+.auth-error{background:#FFEBEE;color:#C62828;border-radius:8px;padding:10px;font-size:13px;margin-bottom:10px;display:none;text-align:left;}
+.auth-loading{color:#888;font-size:13px;}
+.auth-switch{font-size:13px;color:#FF8C42;margin-top:8px;cursor:pointer;text-decoration:underline;}
+.reg-form{display:none;}
+.reg-form.active{display:block;}
+/* PENDING SCREEN */
+#pending-screen{position:fixed;inset:0;background:linear-gradient(135deg,#5C6BC0,#7B2FBE);display:flex;align-items:center;justify-content:center;z-index:9999;}
+#pending-screen.hidden{display:none;}
+.pending-card{background:white;border-radius:24px;padding:36px 28px;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;}
+.pending-icon{font-size:52px;margin-bottom:12px;}
+.pending-title{font-size:20px;font-weight:700;color:#2d2d2d;margin-bottom:8px;}
+.pending-msg{font-size:14px;color:#666;line-height:1.6;margin-bottom:20px;}
+.pending-email{font-weight:700;color:#5C6BC0;}
+.pending-logout-btn{background:#f5f5f5;color:#444;border:none;border-radius:10px;padding:10px 24px;font-size:14px;cursor:pointer;font-weight:600;}
+.pending-logout-btn:hover{background:#eee;}
+/* TOP BAR */
+.user-info-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.user-role-badge{background:rgba(255,255,255,0.25);color:white;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;}
+.logout-btn{background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.4);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;}
+.logout-btn:hover{background:rgba(255,255,255,0.35);}
+.sync-indicator{font-size:11px;color:rgba(255,255,255,0.8);padding:3px 8px;background:rgba(255,255,255,0.15);border-radius:8px;}
+/* PARENT */
+.parent-banner{background:linear-gradient(135deg,#5C6BC0,#9C27B0);color:white;padding:10px 16px;font-size:13px;font-weight:600;text-align:center;}
+.readonly-msg{background:#E3F2FD;border:1px solid #90CAF9;border-radius:8px;padding:8px 14px;font-size:12px;color:#1565C0;margin-bottom:10px;text-align:center;}
+/* APPROBATIONS */
+.approval-section{background:#FFF8E1;border:2px solid #FFD600;border-radius:14px;padding:16px;margin:12px 16px;}
+.approval-section h3{font-size:15px;font-weight:700;color:#F57F17;margin-bottom:12px;}
+.approval-item{background:white;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,0.08);flex-wrap:wrap;}
+.approval-info{flex:1;min-width:160px;}
+.approval-name{font-weight:700;font-size:14px;color:#1a1a2a;}
+.approval-email{font-size:12px;color:#888;margin-top:2px;}
+.approval-child-select{border:1.5px solid #ddd;border-radius:8px;padding:5px 8px;font-size:13px;margin-top:6px;width:100%;}
+.approval-btns{display:flex;gap:6px;flex-shrink:0;margin-top:4px;}
+.btn-approve{background:#4CAF50;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-approve:hover{background:#388E3C;}
+.btn-reject{background:#f5f5f5;color:#e53935;border:1px solid #e53935;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-reject:hover{background:#FFEBEE;}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">⭐</div>
+    <div class="auth-title">Ma Garderie</div>
+    <div class="auth-error" id="auth-error"></div>
+    <div id="login-form">
+      <div class="auth-sub">Connectez-vous à votre compte</div>
+      <input type="email"    class="auth-input" id="auth-email"    placeholder="Adresse courriel" autocomplete="email"/>
+      <input type="password" class="auth-input" id="auth-password" placeholder="Mot de passe"     autocomplete="current-password"/>
+      <button class="auth-btn" onclick="doLogin()">🔐 Se connecter</button>
+      <div class="auth-loading" id="auth-loading" style="display:none;">Connexion en cours...</div>
+      <div class="auth-switch" onclick="toggleAuthMode(true)">Première fois ? Créer mon compte parent</div>
+    </div>
+    <div id="register-form" class="reg-form">
+      <div class="auth-sub">Créer votre compte parent</div>
+      <input type="text"     class="auth-input" id="reg-nom"      placeholder="Votre nom complet"/>
+      <input type="email"    class="auth-input" id="reg-email"    placeholder="Adresse courriel" autocomplete="email"/>
+      <input type="password" class="auth-input" id="reg-password" placeholder="Mot de passe (min. 6 caractères)"/>
+      <input type="text"     class="auth-input" id="reg-enfant"   placeholder="Prénom de votre enfant"/>
+      <button class="auth-btn" onclick="doRegister()">📝 Envoyer ma demande</button>
+      <div class="auth-loading" id="reg-loading" style="display:none;">Envoi en cours...</div>
+      <div class="auth-switch" onclick="toggleAuthMode(false)">← Retour à la connexion</div>
+    </div>
+  </div>
+</div>
+
+<!-- ÉCRAN EN ATTENTE -->
+<div id="pending-screen" class="hidden">
+  <div class="pending-card">
+    <div class="pending-icon">⏳</div>
+    <div class="pending-title">Demande envoyée !</div>
+    <div class="pending-msg">
+      Votre demande a bien été reçue.<br/>
+      L'éducatrice va approuver votre compte sous peu.<br/><br/>
+      Compte : <span class="pending-email" id="pending-email-display"></span>
+    </div>
+    <button class="pending-logout-btn" onclick="doPendingLogout()">Se déconnecter</button>
+  </div>
+</div>
+
+<!-- PARENT BANNER -->
+<div id="parent-banner" style="display:none;" class="parent-banner">
+  👀 Mode consultation — Bonjour <span id="parent-name"></span> ! Profil de <strong id="parent-child-name"></strong>
+</div>
+
+
+<div class="top-bar">
+  <h1>⭐ Ma Garderie</h1>
+  <div class="user-info-bar">
+    <span class="sync-indicator" id="sync-status">⏳ Sync...</span>
+    <span class="user-role-badge" id="user-role-badge"></span>
+    <span class="date" id="date-label"></span>
+    <button class="logout-btn" onclick="doLogout()">Déconnexion</button>
+  </div>
+</div>
+<!-- APPROBATIONS container -->
+<div id="approval-container"></div>
+
+<div class="kids-overview">
+  <div class="kids-overview-title">👶 Tous les enfants</div>
+  <div class="kids-grid" id="kids-grid"></div>
+</div>
+
+<div class="global-summary">
+  <div class="g-card"><div class="g-num" id="s-done" style="color:#4CAF50">0</div><div class="g-label">✅ Faites</div></div>
+  <div class="g-card"><div class="g-num" id="s-total" style="color:#FF8C42">0</div><div class="g-label">📋 Total</div></div>
+  <div class="g-card"><div class="g-num" id="s-stars" style="color:#FFC107">0</div><div class="g-label">⭐ Étoiles</div></div>
+  <div class="g-card"><div class="g-num" id="s-pct" style="color:#9C27B0">0%</div><div class="g-label">📊 Progrès</div></div>
+</div>
+
+<div class="nav-tabs" id="nav-tabs">
+  <button class="nav-tab active" id="tab-taches" onclick="showPage('taches')">📋 Tâches</button>
+  <button class="nav-tab" id="tab-menu" onclick="showPage('menu')">🍽️ Menu</button>
+  <button class="nav-tab" id="tab-journal" onclick="showPage('journal')">📝 Journal</button>
+  <button class="nav-tab" id="tab-activites" onclick="showPage('activites')">🏃 Activités</button>
+  <button class="nav-tab" id="tab-contacts" onclick="showPage('contacts')">📞 Contacts</button>
+  <button class="nav-tab" id="tab-sante" onclick="showPage('sante')">💊 Santé</button>
+  <button class="nav-tab" id="tab-rapport" onclick="showPage('rapport')">📊 Rapport</button>
+  <button class="nav-tab" id="tab-fournitures" onclick="showPage('fournitures')">🛒 Fournitures</button>
+  <button class="nav-tab" id="tab-bday" onclick="showPage('bday')">🎂 Anniversaires</button>
+</div>
+
+<!-- PAGE TÂCHES -->
+<div id="page-taches">
+<div style="padding:16px;max-width:720px;margin:0 auto;">
+  <div class="child-card">
+    <div class="avatar-big" id="av-big">😊</div>
+    <div class="child-info">
+      <div class="child-name-row">
+        <div class="child-name-big" id="child-name-big">--</div>
+        <span class="age-badge" id="age-badge">2 ans</span>
+      </div>
+      <div class="stars-row">
+        <span id="stars-display" style="font-size:16px;">⭐</span>
+        <span class="stars-count" id="stars-count"></span>
+      </div>
+      <div class="reward-progress" id="reward-progress"></div>
+    </div>
+    <button class="edit-btn" onclick="openEdit()">✏️ Modifier</button>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-label"><span id="prog-txt">0 / 0 tâches</span><span id="prog-pct-txt">0%</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="section-title">📋 Tâches du jour</div>
+  <div class="tasks-grid" id="task-list"></div>
+
+  <!-- Tâches récurrentes / modèles -->
+  <div class="templates-box" id="templates-box">
+    <h3>⚡ Ajouter depuis un modèle</h3>
+    <div class="templates-grid" id="templates-grid"></div>
+  </div>
+
+  <div class="rewards-section">
+    <div class="rewards-title">🏆 Récompenses de <span id="reward-child-name">--</span></div>
+    <div class="rewards-grid" id="rewards-grid"></div>
+  </div>
+
+  <div class="add-box">
+    <h3>➕ Ajouter une tâche</h3>
+    <div class="add-row">
+      <input type="text" id="new-name" placeholder="Ex: Ranger ses jouets..." />
+      <select id="new-time"><option>Matin</option><option>Midi</option><option>Après-midi</option><option>Soir</option></select>
+      <select id="new-stars">
+        <option value="1">⭐ 1 étoile</option>
+        <option value="2">⭐⭐ 2 étoiles</option>
+        <option value="3">⭐⭐⭐ 3 étoiles</option>
+      </select>
+      <button onclick="addTask()">Ajouter</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-reset" onclick="resetChild()">↺ Réinitialiser cet enfant</button>
+    <button class="btn-reset-all" onclick="resetAll()">↺ Réinitialiser tous</button>
+  </div>
+</div>
+</div>
+
+<!-- PAGE MENU DU JOUR -->
+<div id="page-menu" style="display:none;">
+<div class="menu-page">
+  <div class="menu-date-bar">
+    <div>
+      <div class="menu-date-title">🍽️ Menu du jour</div>
+      <div class="menu-date-sub" id="menu-date-sub"></div>
+    </div>
+  </div>
+  <div class="menu-nav" id="menu-day-nav"></div>
+  <div class="menu-section">
+    <div class="menu-section-header">
+      <span class="menu-section-icon">🍎</span>
+      <span class="menu-section-title">Collation du matin</span>
+      <span class="menu-section-time" style="background:#FFF3E0;color:#E65100;">9h00 – 9h30</span>
+    </div>
+    <div id="menu-collation-am"></div>
+    <div class="menu-add-row">
+      <input type="text" id="add-collation-am" placeholder="Ex: Compote de pommes..." />
+      <button onclick="addMenuItem('collation_am','add-collation-am')">+ Ajouter</button>
+    </div>
+  </div>
+  <div class="menu-section">
+    <div class="menu-section-header">
+      <span class="menu-section-icon">🥗</span>
+      <span class="menu-section-title">Dîner</span>
+      <span class="menu-section-time" style="background:#E8F5E9;color:#2E7D32;">11h30 – 12h30</span>
+    </div>
+    <div id="menu-diner"></div>
+    <div class="menu-add-row">
+      <input type="text" id="add-diner" placeholder="Ex: Pâtes sauce tomate..." />
+      <button onclick="addMenuItem('diner','add-diner')">+ Ajouter</button>
+    </div>
+  </div>
+  <div class="menu-section">
+    <div class="menu-section-header">
+      <span class="menu-section-icon">🧃</span>
+      <span class="menu-section-title">Collation de l'après-midi</span>
+      <span class="menu-section-time" style="background:#E3F2FD;color:#1565C0;">14h30 – 15h00</span>
+    </div>
+    <div id="menu-collation-pm"></div>
+    <div class="menu-add-row">
+      <input type="text" id="add-collation-pm" placeholder="Ex: Yogourt, Fruits frais..." />
+      <button onclick="addMenuItem('collation_pm','add-collation-pm')">+ Ajouter</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE JOURNAL -->
+<div id="page-journal" style="display:none;">
+<div class="journal-page">
+  <div class="journal-banner">
+    <div>
+      <div class="journal-banner-title">📝 Journal / Notes du jour</div>
+      <div class="journal-banner-sub" id="journal-date-sub"></div>
+    </div>
+    <span style="font-size:36px;">🗒️</span>
+  </div>
+  <div class="journal-child-select" id="journal-child-select"></div>
+  <div class="journal-entry-box">
+    <h3>✍️ Nouvelle note</h3>
+    <textarea class="journal-textarea" id="journal-text" placeholder="Notez le comportement, l'humeur, les progrès, les événements importants de la journée..."></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <select id="journal-mood" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;">
+        <option value="😊">😊 Bonne journée</option>
+        <option value="😐">😐 Journée normale</option>
+        <option value="😢">😢 Journée difficile</option>
+        <option value="🤒">🤒 Était malade</option>
+        <option value="🎉">🎉 Événement spécial</option>
+      </select>
+      <button class="journal-save-btn" onclick="saveJournalEntry()">💾 Enregistrer</button>
+    </div>
+  </div>
+  <div class="journal-history">
+    <h3>📚 Historique des notes</h3>
+    <div id="journal-history-list"></div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE ACTIVITÉS -->
+<div id="page-activites" style="display:none;">
+<div class="activities-page">
+  <div class="activities-banner">
+    <div>
+      <div class="activities-banner-title">🏃 Activités & Sorties</div>
+      <div class="activities-banner-sub">Planifiez et suivez les activités</div>
+    </div>
+    <span style="font-size:36px;">🎠</span>
+  </div>
+  <div class="activity-add-box">
+    <h3>➕ Planifier une activité</h3>
+    <div class="activity-form">
+      <input type="text" id="act-name" placeholder="Nom de l'activité (ex: Sortie au parc)" />
+      <div class="activity-form-row">
+        <select id="act-type">
+          <option>🎨 Atelier créatif</option>
+          <option>🌳 Sortie extérieure</option>
+          <option>📚 Lecture / Histoire</option>
+          <option>🎵 Musique / Chant</option>
+          <option>⚽ Sport / Motricité</option>
+          <option>🧩 Jeu éducatif</option>
+          <option>🎭 Théâtre / Déguisement</option>
+          <option>🍳 Cuisine / Pâtisserie</option>
+          <option>🏊 Piscine / Eau</option>
+          <option>🌱 Jardinage</option>
+        </select>
+        <input type="date" id="act-date" />
+        <input type="time" id="act-time" />
+      </div>
+      <input type="text" id="act-desc" placeholder="Description ou remarques (optionnel)" />
+      <button class="activity-add-btn" onclick="addActivity()">+ Ajouter l'activité</button>
+    </div>
+  </div>
+  <div class="section-title">📅 Activités planifiées</div>
+  <div class="activity-list" id="activity-list"></div>
+</div>
+</div>
+
+<!-- PAGE CONTACTS -->
+<div id="page-contacts" style="display:none;">
+<div class="contacts-page">
+  <div class="contacts-banner">
+    <div>
+      <div class="contacts-banner-title">📞 Contacts des parents</div>
+      <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">Coordonnées d'urgence</div>
+    </div>
+    <span style="font-size:36px;">👨‍👩‍👧</span>
+  </div>
+  <div class="contact-add-box">
+    <h3>➕ Ajouter un contact</h3>
+    <div class="contact-form">
+      <input type="text" id="ct-name" placeholder="Nom complet" />
+      <select id="ct-relation">
+        <option>👨 Papa</option>
+        <option>👩 Maman</option>
+        <option>👴 Grand-père</option>
+        <option>👵 Grand-mère</option>
+        <option>👤 Tuteur/Tutrice</option>
+        <option>👤 Contact d'urgence</option>
+        <option>🏥 Médecin</option>
+      </select>
+      <input type="tel" id="ct-phone" placeholder="Téléphone" />
+      <select id="ct-child" class="contact-form-full">
+      </select>
+      <button class="contact-add-btn" onclick="addContact()">+ Ajouter</button>
+    </div>
+  </div>
+  <div class="contact-child-filter" id="contact-filter"></div>
+  <div id="contact-list"></div>
+</div>
+</div>
+
+<!-- PAGE SANTÉ -->
+<div id="page-sante" style="display:none;">
+<div class="sante-page">
+  <div class="sante-banner">
+    <div>
+      <div class="sante-banner-title">💊 Santé des enfants</div>
+      <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">Allergies, médicaments, notes médicales</div>
+    </div>
+    <span style="font-size:36px;">🏥</span>
+  </div>
+  <div class="sante-child-select" id="sante-child-select"></div>
+  <div class="sante-section">
+    <h3>⚠️ Allergies</h3>
+    <div class="sante-tags-wrap" id="sante-allergies"></div>
+    <div class="sante-add-row">
+      <input type="text" id="sante-allergie-input" placeholder="Ex: Arachides, Lactose..." />
+      <button onclick="addSanteItem('allergie')">+ Ajouter</button>
+    </div>
+  </div>
+  <div class="sante-section">
+    <h3>💊 Médicaments</h3>
+    <div class="sante-tags-wrap" id="sante-medicaments"></div>
+    <div class="sante-add-row">
+      <input type="text" id="sante-medicament-input" placeholder="Ex: Ventolin 2x/jour..." />
+      <button onclick="addSanteItem('medicament')" style="background:#2E7D32;">+ Ajouter</button>
+    </div>
+  </div>
+  <div class="sante-section">
+    <h3>📋 Notes médicales</h3>
+    <div class="sante-tags-wrap" id="sante-notes"></div>
+    <div class="sante-add-row">
+      <input type="text" id="sante-note-input" placeholder="Ex: Problème d'audition gauche..." />
+      <button onclick="addSanteItem('note')" style="background:#1565C0;">+ Ajouter</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE RAPPORT -->
+<div id="page-rapport" style="display:none;">
+<div class="rapport-page">
+  <div class="rapport-banner">
+    <div>
+      <div class="rapport-banner-title">📊 Rapport hebdomadaire</div>
+      <div class="rapport-banner-sub" id="rapport-week-label-banner">Semaine en cours</div>
+    </div>
+    <span style="font-size:36px;">📈</span>
+  </div>
+  <div class="rapport-week-nav">
+    <button onclick="changeRapportWeek(-1)">◀ Préc.</button>
+    <div class="rapport-week-label" id="rapport-week-label">Cette semaine</div>
+    <button onclick="changeRapportWeek(1)">Suiv. ▶</button>
+  </div>
+  <button class="export-pdf-btn" onclick="exportPDF()">⬇️ Exporter en PDF</button>
+  <div class="rapport-grid" id="rapport-stats"></div>
+  <div class="rapport-child-table">
+    <h3>👶 Détail par enfant</h3>
+    <div style="overflow-x:auto;"><table class="rapport-table" id="rapport-table">
+      <thead><tr>
+        <th>Enfant</th><th>✅ Tâches</th><th>⭐ Étoiles</th><th>📊 Progrès</th><th>🏆 Récompenses</th>
+      </tr></thead>
+      <tbody id="rapport-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE FOURNITURES -->
+<div id="page-fournitures" style="display:none;">
+<div class="fournitures-page">
+  <div class="fournitures-banner">
+    <div>
+      <div class="fournitures-banner-title">🛒 Liste de fournitures</div>
+      <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">Matériel à acheter</div>
+    </div>
+    <span style="font-size:36px;">📦</span>
+  </div>
+  <div class="fournitures-section">
+    <h3>➕ Ajouter une fourniture</h3>
+    <div class="fournitures-add-row">
+      <input type="text" id="four-name" placeholder="Article..." />
+      <input type="number" id="four-qty" placeholder="Qté" min="1" value="1" style="max-width:70px;" />
+      <select id="four-cat">
+        <option>🎨 Arts</option>
+        <option>📚 Livres</option>
+        <option>🧸 Jouets</option>
+        <option>🧹 Entretien</option>
+        <option>🍽️ Cuisine</option>
+        <option>💊 Santé</option>
+        <option>👕 Vêtements</option>
+        <option>📦 Autre</option>
+      </select>
+      <button onclick="addFourniture()">+ Ajouter</button>
+    </div>
+  </div>
+  <div class="fournitures-section">
+    <div class="fournitures-progress" id="four-progress"></div>
+    <div class="fournitures-filter" id="four-filter"></div>
+    <div id="fournitures-list"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #ddd;background:white;font-size:12px;color:#666;cursor:pointer;font-weight:600;" onclick="clearCheckedFournitures()">🗑️ Supprimer les achetés</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE ANNIVERSAIRES -->
+<div id="page-bday" style="display:none;">
+<div class="bday-page">
+  <div class="bday-banner">
+    <div>
+      <div class="bday-banner-title">🎂 Anniversaires des enfants</div>
+      <div class="bday-banner-sub" id="bday-banner-sub">Compte à rebours et alertes</div>
+    </div>
+    <span style="font-size:40px;">🎈</span>
+  </div>
+  <div id="bday-alerts"></div>
+  <div class="bday-grid" id="bday-grid"></div>
+</div>
+</div>
+
+<!-- CELEBRATE -->
+<div class="celebrate" id="celebrate">
+  <div class="celebrate-icon" id="cel-icon">🎉</div>
+  <div class="celebrate-text" id="cel-text">Bravo !</div>
+  <div class="celebrate-sub" id="cel-sub"></div>
+  <button class="celebrate-close" onclick="closeCelebrate()">Super ! 👍</button>
+</div>
+
+<!-- MODAL MODIFIER ENFANT (avec avatar photo) -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>✏️ Modifier l'enfant</h2>
+    <div class="avatar-upload-wrap">
+      <div class="avatar-preview" id="modal-avatar-preview" onclick="document.getElementById('avatar-file-input').click()">😊</div>
+      <label class="avatar-upload-label" for="avatar-file-input">📷 Changer la photo</label>
+      <input type="file" id="avatar-file-input" accept="image/*" onchange="handleAvatarUpload(event)" />
+    </div>
+    <div class="avatar-tabs">
+      <button class="avatar-tab active" id="atab-emoji" onclick="switchAvatarTab('emoji')">😊 Emoji</button>
+      <button class="avatar-tab" id="atab-photo" onclick="switchAvatarTab('photo')">📷 Photo</button>
+    </div>
+    <div id="avatar-emoji-section">
+      <div class="emoji-grid" id="emoji-grid"></div>
+    </div>
+    <div id="avatar-photo-section" style="display:none;">
+      <div style="text-align:center;padding:16px;background:#FFF8F0;border-radius:10px;border:2px dashed #FFD4B0;cursor:pointer;" onclick="document.getElementById('avatar-file-input').click()">
+        <div style="font-size:36px;margin-bottom:8px;">📷</div>
+        <div style="font-size:12px;color:#FF8C42;font-weight:600;">Cliquer pour choisir une photo</div>
+        <div style="font-size:11px;color:#aaa;margin-top:4px;">JPG, PNG (max 2MB)</div>
+      </div>
+    </div>
+    <input type="text" id="edit-name" placeholder="Prénom..." style="margin-top:10px;" />
+    <select id="edit-age">
+      <option value="2">2 ans</option><option value="3">3 ans</option>
+      <option value="4">4 ans</option><option value="5">5 ans</option>
+    </select>
+    <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">🎂 Date d'anniversaire</label>
+    <input type="date" id="edit-bday" />
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-ok" onclick="confirmEdit()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ============================================================
+// FIREBASE CONFIG — VOS VALEURS ICI
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBCATHjxwPEaTZbK5DXDD3DoVxovoOaCkM",
+  authDomain: "ma-garderie-2a877.firebaseapp.com",
+  projectId: "ma-garderie-2a877",
+  storageBucket: "ma-garderie-2a877.firebasestorage.app",
+  messagingSenderId: "712410028164",
+  appId: "1:712410028164:web:a9f6905aa3eecf2ee0cad1"
+};
+// ============================================================
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db   = firebase.firestore();
+const auth = firebase.auth();
+
+let currentUser     = null;
+let currentUserRole = null;
+let currentUserData = null;
+let unsubscribers   = [];
+
+// ── TOGGLE LOGIN/REGISTER ─────────────────────────────────────
+function toggleAuthMode(showReg) {
+  document.getElementById('auth-error').style.display = 'none';
+  document.getElementById('login-form').style.display = showReg ? 'none' : 'block';
+  document.getElementById('register-form').classList.toggle('active', showReg);
+}
+
+// ── CONNEXION ─────────────────────────────────────────────────
+function doLogin() {
+  const email = document.getElementById('auth-email').value.trim();
+  const pwd   = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  const ldEl  = document.getElementById('auth-loading');
+  errEl.style.display = 'none';
+  if (!email || !pwd) {
+    errEl.textContent = 'Veuillez saisir email et mot de passe.';
+    errEl.style.display = 'block'; return;
+  }
+  ldEl.style.display = 'block';
+  auth.signInWithEmailAndPassword(email, pwd)
+    .then(() => { ldEl.style.display = 'none'; })
+    .catch(err => {
+      ldEl.style.display = 'none';
+      const msgs = {
+        'auth/user-not-found':     'Compte introuvable.',
+        'auth/wrong-password':     'Mot de passe incorrect.',
+        'auth/invalid-credential': 'Email ou mot de passe incorrect.',
+        'auth/invalid-email':      'Adresse courriel invalide.',
+        'auth/too-many-requests':  'Trop de tentatives. Réessayez plus tard.'
+      };
+      errEl.textContent = msgs[err.code] || 'Erreur : ' + err.message;
+      errEl.style.display = 'block';
+    });
+}
+
+// ── DÉCONNEXION ───────────────────────────────────────────────
+function doLogout() {
+  if (!confirm('Voulez-vous vous déconnecter ?')) return;
+  unsubscribers.forEach(u => u()); unsubscribers = [];
+  auth.signOut();
+}
+
+// ── INSCRIPTION PARENT ────────────────────────────────────────
+async function doRegister() {
+  const nom    = document.getElementById('reg-nom').value.trim();
+  const email  = document.getElementById('reg-email').value.trim();
+  const pwd    = document.getElementById('reg-password').value;
+  const enfant = document.getElementById('reg-enfant').value.trim();
+  const errEl  = document.getElementById('auth-error');
+  const ldEl   = document.getElementById('reg-loading');
+  errEl.style.display = 'none';
+  if (!nom || !email || !pwd || !enfant) {
+    errEl.textContent = 'Veuillez remplir tous les champs.';
+    errEl.style.display = 'block'; return;
+  }
+  if (pwd.length < 6) {
+    errEl.textContent = 'Mot de passe trop court (min. 6 caractères).';
+    errEl.style.display = 'block'; return;
+  }
+  ldEl.style.display = 'block';
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+    await db.collection('users').doc(cred.user.uid).set({
+      role: 'pending', email, nom, enfant,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    ldEl.style.display = 'none';
+  } catch(err) {
+    ldEl.style.display = 'none';
+    const msgs = {
+      'auth/email-already-in-use': 'Cette adresse est déjà utilisée.',
+      'auth/invalid-email':        'Adresse courriel invalide.',
+      'auth/weak-password':        'Mot de passe trop faible.'
+    };
+    errEl.textContent = msgs[err.code] || 'Erreur : ' + err.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function doPendingLogout() {
+  auth.signOut();
+  document.getElementById('pending-screen').classList.add('hidden');
+}
+
+// ── AUTH STATE LISTENER ───────────────────────────────────────
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    try {
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      if (!userDoc.exists) {
+        showAuthError("Compte non configuré. Contactez l'éducatrice.");
+        auth.signOut(); return;
+      }
+      currentUser     = user;
+      currentUserData = userDoc.data();
+      currentUserRole = currentUserData.role;
+
+      // En attente d'approbation
+      if (currentUserRole === 'pending') {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('pending-screen').classList.remove('hidden');
+        document.getElementById('pending-email-display').textContent = user.email;
+        return;
+      }
+
+      // Connecté
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('pending-screen').classList.add('hidden');
+      document.getElementById('user-role-badge').textContent =
+        currentUserRole === 'admin' ? '👩‍🏫 Éducatrice' : '👨‍👩‍👧 Parent';
+      document.getElementById('sync-status').textContent = '🟢 Connecté';
+
+      if (currentUserRole === 'admin') {
+        document.getElementById('parent-banner').style.display = 'none';
+        startFirestoreListeners();
+        startApprovalsListener();
+        load(); render();
+        setTimeout(loadPendingApprovals, 1500);
+      } else {
+        setupParentView();
+      }
+    } catch(e) {
+      console.error(e);
+      showAuthError('Erreur de connexion. Réessayez.');
+      auth.signOut();
+    }
+  } else {
+    currentUser = null; currentUserRole = null; currentUserData = null;
+    document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('pending-screen').classList.add('hidden');
+    document.getElementById('sync-status').textContent = '⏳ Sync...';
+  }
+});
+
+function showAuthError(msg) {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// ── APPROBATIONS ADMIN ────────────────────────────────────────
+async function loadPendingApprovals() {
+  if (currentUserRole !== 'admin') return;
+  try {
+    const snap = await db.collection('users').where('role','==','pending').get();
+    const container = document.getElementById('approval-container');
+    if (!container) return;
+    if (snap.empty) { container.innerHTML = ''; return; }
+    const div = document.createElement('div');
+    div.className = 'approval-section';
+    const h3 = document.createElement('h3');
+    h3.textContent = '🔔 Demandes en attente (' + snap.size + ')';
+    div.appendChild(h3);
+    snap.forEach(doc => {
+      const d = doc.data();
+      const item = document.createElement('div');
+      item.className = 'approval-item';
+      const opts = (state.children||[]).map((c,i) =>
+        '<option value="enfant_'+i+'">'+(c.name||'Enfant '+(i+1))+'</option>'
+      ).join('');
+      item.innerHTML =
+        '<div class="approval-info">' +
+          '<div class="approval-name">' + d.nom + '</div>' +
+          '<div class="approval-email">' + d.email + '</div>' +
+          '<div style="font-size:12px;color:#666;margin-top:4px;">Enfant : <strong>' + d.enfant + '</strong></div>' +
+          '<select class="approval-child-select" id="cs-' + doc.id + '">' +
+            '<option value="">-- Associer un enfant --</option>' + opts +
+          '</select>' +
+        '</div>' +
+        '<div class="approval-btns"></div>';
+      const btns = item.querySelector('.approval-btns');
+      const btnApprove = document.createElement('button');
+      btnApprove.className = 'btn-approve';
+      btnApprove.textContent = '✅ Approuver';
+      btnApprove.addEventListener('click', function() { approveParent(doc.id, d.nom); });
+      const btnReject = document.createElement('button');
+      btnReject.className = 'btn-reject';
+      btnReject.textContent = '❌ Refuser';
+      btnReject.addEventListener('click', function() { rejectParent(doc.id, d.nom); });
+      btns.appendChild(btnApprove);
+      btns.appendChild(btnReject);
+      div.appendChild(item);
+    });
+    container.innerHTML = '';
+    container.appendChild(div);
+  } catch(e) { console.error('approvals error:', e); }
+}
+
+async function approveParent(uid, nom) {
+  const sel = document.getElementById('cs-' + uid);
+  const childId = sel ? sel.value : '';
+  if (!childId) { alert("Veuillez associer un enfant avant d'approuver."); return; }
+  if (!confirm('Approuver ' + nom + ' ?')) return;
+  try {
+    await db.collection('users').doc(uid).update({ role: 'parent', childId });
+    alert('✅ ' + nom + ' peut maintenant se connecter !');
+    loadPendingApprovals();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+async function rejectParent(uid, nom) {
+  if (!confirm('Refuser la demande de ' + nom + ' ?')) return;
+  try {
+    await db.collection('users').doc(uid).delete();
+    alert('Demande de ' + nom + ' refusée.');
+    loadPendingApprovals();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+function startApprovalsListener() {
+  if (currentUserRole !== 'admin') return;
+  const unsub = db.collection('users').where('role','==','pending')
+    .onSnapshot(() => loadPendingApprovals());
+  unsubscribers.push(unsub);
+}
+
+// ── SYNC STATUS ───────────────────────────────────────────────
+function setSyncStatus(s) {
+  const el = document.getElementById('sync-status');
+  if (s === 'saving') el.textContent = '💾 Sauvegarde...';
+  else if (s === 'saved') {
+    el.textContent = '✅ Sauvegardé';
+    setTimeout(() => { if (el.textContent === '✅ Sauvegardé') el.textContent = '🟢 Connecté'; }, 2000);
+  }
+  else if (s === 'error') el.textContent = '❌ Erreur sync';
+}
+
+// ── SAUVEGARDE FIRESTORE ──────────────────────────────────────
+async function saveToFirestore() {
+  if (currentUserRole !== 'admin') return;
+  setSyncStatus('saving');
+  try {
+    await db.collection('garderie').doc('main').set({
+      children: state.children.map(c => ({...c, photo: c.photo ? c.photo.substring(0,50000) : null})),
+      active: state.active,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setSyncStatus('saved');
+  } catch(e) {
+    console.error(e); setSyncStatus('error');
+    try { localStorage.setItem('garderie_v5', JSON.stringify(state)); } catch(le) {}
+  }
+}
+
+async function saveExtraToFirestore(key, val) {
+  if (currentUserRole !== 'admin') return;
+  try {
+    await db.collection('garderie').doc('extra_'+key).set({
+      data: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) {
+    try { localStorage.setItem('gard_'+key, JSON.stringify(val)); } catch(le) {}
+  }
+}
+
+async function loadExtraFromFirestore(key, def) {
+  try {
+    const d = await db.collection('garderie').doc('extra_'+key).get();
+    return d.exists ? d.data().data : def;
+  } catch(e) {
+    try { const s = localStorage.getItem('gard_'+key); return s ? JSON.parse(s) : def; }
+    catch(le) { return def; }
+  }
+}
+
+// ── LISTENERS TEMPS RÉEL ──────────────────────────────────────
+function startFirestoreListeners() {
+  const unsub = db.collection('garderie').doc('main').onSnapshot(doc => {
+    if (doc.exists) {
+      const d = doc.data();
+      if (d.children) { state.children = d.children; state.active = d.active||0; render(); }
+    }
+  }, err => console.error(err));
+  unsubscribers.push(unsub);
+}
+
+// ── VUE PARENT ────────────────────────────────────────────────
+async function setupParentView() {
+  const idx = parseInt((currentUserData.childId||'enfant_0').split('_')[1]);
+  try {
+    const doc = await db.collection('garderie').doc('main').get();
+    if (doc.exists) {
+      const d = doc.data();
+      state.children = d.children || state.children;
+      state.active = idx;
+    }
+  } catch(e) { console.error(e); }
+
+  const childName = state.children[idx] ? state.children[idx].name : 'Enfant';
+  document.getElementById('parent-banner').style.display = 'block';
+  document.getElementById('parent-name').textContent = currentUserData.nom || 'Parent';
+  document.getElementById('parent-child-name').textContent = childName;
+  state.active = idx; render();
+  applyParentReadonly();
+
+  const unsub = db.collection('garderie').doc('main').onSnapshot(doc => {
+    if (doc.exists) {
+      const d = doc.data();
+      if (d.children) { state.children = d.children; state.active = idx; render(); applyParentReadonly(); }
+    }
+  });
+  unsubscribers.push(unsub);
+}
+
+function applyParentReadonly() {
+  ['tab-rapport','tab-fournitures'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  const grid = document.querySelector('.kids-overview'); if (grid) grid.style.display = 'none';
+  setTimeout(() => {
+    document.querySelectorAll('.edit-btn,.del-btn,.menu-del-btn,.journal-item-del,.activity-del-btn,.contact-del').forEach(b => b.style.display='none');
+    document.querySelectorAll('.add-box,.add-row,.menu-add-row,.journal-entry-box,.activity-add-box,.contact-add-box,.sante-add-row,.actions,.templates-box').forEach(el => el.style.display='none');
+    document.querySelectorAll('.task-item').forEach(t => t.style.pointerEvents='none');
+    const main = document.querySelector('#page-taches > div');
+    if (main && !main.querySelector('.readonly-msg')) {
+      const msg = document.createElement('div');
+      msg.className = 'readonly-msg';
+      msg.textContent = '👁️ Mode consultation — informations de votre enfant en temps réel';
+      main.insertBefore(msg, main.firstChild);
+    }
+  }, 150);
+}
+
+// ── OVERRIDE SAVE / LOAD ──────────────────────────────────────
+
+// ============================================================
+// CONSTANTES & DONNÉES DE BASE
+// ============================================================
+const COLORS=['#FF6B9D','#FF8C42','#9C27B0','#2196F3','#4CAF50','#FF5722'];
+const DEFAULT_TASKS=[
+  {name:"Dire bonjour en arrivant",icon:"👋",time:"Matin",stars:1},
+  {name:"Se laver les mains",icon:"🧼",time:"Matin",stars:1},
+  {name:"Ranger son manteau",icon:"🧥",time:"Matin",stars:1},
+  {name:"Manger son repas",icon:"🍽️",time:"Midi",stars:2},
+  {name:"Faire la sieste",icon:"😴",time:"Après-midi",stars:2},
+  {name:"Ranger ses jouets",icon:"🧸",time:"Après-midi",stars:2},
+  {name:"Faire un dessin",icon:"🎨",time:"Après-midi",stars:1},
+  {name:"Écouter la lecture",icon:"📖",time:"Matin",stars:1},
+  {name:"Se brosser les dents",icon:"🦷",time:"Midi",stars:2},
+  {name:"Dire merci et svp",icon:"😇",time:"Matin",stars:1},
+];
+const TASK_TEMPLATES=[
+  {name:"Chanter une chanson",icon:"🎵",time:"Matin",stars:1},
+  {name:"Faire de la peinture",icon:"🎨",time:"Après-midi",stars:2},
+  {name:"Jeu de société",icon:"🎲",time:"Après-midi",stars:1},
+  {name:"Promenade dehors",icon:"🌳",time:"Après-midi",stars:2},
+  {name:"Collation santé",icon:"🍎",time:"Matin",stars:1},
+  {name:"Puzzle",icon:"🧩",time:"Après-midi",stars:1},
+  {name:"Yoga enfants",icon:"🧘",time:"Matin",stars:2},
+  {name:"Aide à mettre la table",icon:"🍽️",time:"Midi",stars:2},
+  {name:"Dessin libre",icon:"✏️",time:"Après-midi",stars:1},
+  {name:"Lecture silencieuse",icon:"📖",time:"Après-midi",stars:1},
+  {name:"Activité eau/sable",icon:"🌊",time:"Après-midi",stars:2},
+  {name:"Bricolage",icon:"✂️",time:"Après-midi",stars:2},
+];
+const REWARDS=[
+  {id:"sticker",name:"Autocollant",icon:"🌟",cost:3,msg:"Tu as gagné un autocollant !"},
+  {id:"story",name:"Histoire bonus",icon:"📚",cost:5,msg:"Une histoire rien que pour toi !"},
+  {id:"chef",name:"Chef du jour",icon:"👑",cost:8,msg:"Tu es le chef du jour !"},
+  {id:"game",name:"Jeu spécial",icon:"🎮",cost:10,msg:"Tu choisis le jeu aujourd'hui !"},
+  {id:"treat",name:"Petite gâterie",icon:"🍪",cost:12,msg:"Une surprise pour toi !"},
+  {id:"diploma",name:"Diplôme",icon:"🏆",cost:20,msg:"Félicitations, tu as ton diplôme !"},
+];
+const AVATARS=['😊','🦁','🐻','🐸','🦊','🐨'];
+const AGES=[2,3,4,4,5,3];
+const EMOJIS_LIST=['😊','🦁','🐻','🐸','🦊','🐨','🐯','🐼','🦋','🌈','🐰','🦄','🐧','🐬','🦊','🐮','🐷','🐙','🦅','🌟','⭐','🌸','🍀','🎈'];
+const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+const FOOD_ICONS={'pomme':'🍎','banane':'🍌','orange':'🍊','raisin':'🍇','fraise':'🍓','melon':'🍈','pêche':'🍑','poire':'🍐','kiwi':'🥝','carotte':'🥕','brocoli':'🥦','salade':'🥗','soupe':'🍲','pâtes':'🍝','riz':'🍚','pain':'🍞','fromage':'🧀','yogourt':'🥛','lait':'🥛','jus':'🧃','eau':'💧','céréales':'🥣','compote':'🍎','biscuit':'🍪','craquelin':'🍘','muffin':'🧁','poulet':'🍗','poisson':'🐟','oeufs':'🥚','sandwich':'🥪','pizza':'🍕','burger':'🍔'};
+
+// ============================================================
+// STATE
+// ============================================================
+function makeTasks(){return DEFAULT_TASKS.map(t=>({...t,done:false}));}
+function makeChildren(){
+  return Array.from({length:6},(_,i)=>({
+    name:`Enfant ${i+1}`,age:AGES[i],avatar:AVATARS[i],
+    tasks:makeTasks(),totalStars:0,claimedRewards:[],bday:'',
+    photo:null // base64 photo or null
+  }));
+}
+let state={children:makeChildren(),active:0};
+let editingIdx=0;
+let currentAvatarData={type:'emoji',value:'😊',photo:null};
+
+// ============================================================
+// SAUVEGARDE / CHARGEMENT
+// ============================================================
+// save() overridden below by Firebase version
+// load() overridden below by Firebase version
+
+// Données annexes (pas dans state principal pour éviter taille excessive)
+// saveExtra() overridden below by Firebase version
+// loadExtra() overridden below by Firebase version
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+function todayStars(c){return c.tasks.filter(t=>t.done).reduce((s,t)=>s+(t.stars||1),0);}
+function doneTasks(c){return c.tasks.filter(t=>t.done).length;}
+function col(i){return COLORS[i%COLORS.length];}
+function getFoodIcon(name){const n=name.toLowerCase();for(const[k,v]of Object.entries(FOOD_ICONS)){if(n.includes(k))return v;}return '🍽️';}
+function todayKey(){const d=new Date();return d.toISOString().slice(0,10);}
+
+// ============================================================
+// RENDER DATE
+// ============================================================
+function renderDate(){
+  const d=new Date();
+  document.getElementById('date-label').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+}
+
+// ============================================================
+// KIDS GRID & RÉSUMÉ
+// ============================================================
+function renderKidsGrid(){
+  document.getElementById('kids-grid').innerHTML=state.children.map((c,i)=>{
+    const done=doneTasks(c);const total=c.tasks.length;
+    const pct=total?Math.round(done/total*100):0;
+    const stars=todayStars(c);const allDone=done===total&&total>0;
+    const isActive=i===state.active;const color=col(i);
+    const avatarContent=c.photo
+      ?`<img src="${c.photo}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;" />`
+      :`<span style="font-size:22px;">${c.avatar}</span>`;
+    return `<div class="kid-card${isActive?' active':''}" onclick="setChild(${i})"
+      style="border-color:${isActive?color:'#FFD4B0'};${isActive?'box-shadow:0 4px 18px '+color+'55;background:'+color+'11;':''}">
+      ${allDone?'<div class="kid-all-done">✓</div>':''}
+      <div class="kid-avatar">${avatarContent}</div>
+      <div class="kid-name">${c.name}</div>
+      <div class="kid-age">${c.age} ans</div>
+      <div class="kid-stars">⭐ ${stars}</div>
+      <div class="kid-prog-bar"><div class="kid-prog-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="kid-tasks-count">${done}/${total} tâches</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSummary(){
+  let done=0,total=0,stars=0;
+  state.children.forEach(c=>{done+=doneTasks(c);total+=c.tasks.length;stars+=todayStars(c);});
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-stars').textContent=stars;
+  document.getElementById('s-pct').textContent=total?Math.round(done/total*100)+'%':'0%';
+}
+
+// ============================================================
+// RENDER TÂCHES
+// ============================================================
+function renderChildDetail(){
+  const c=state.children[state.active];
+  const color=col(state.active);
+  const done=doneTasks(c);const total=c.tasks.length;
+  const pct=total?Math.round(done/total*100):0;
+  const s=todayStars(c);const totalSoFar=(c.totalStars||0)+s;
+
+  // Avatar (photo ou emoji)
+  const avEl=document.getElementById('av-big');
+  if(c.photo){avEl.innerHTML=`<img src="${c.photo}" style="width:58px;height:58px;border-radius:50%;object-fit:cover;" />`;}
+  else{avEl.textContent=c.avatar;}
+  avEl.style.background=color+'22';avEl.style.borderColor=color;
+
+  document.getElementById('child-name-big').textContent=c.name;
+  document.getElementById('age-badge').textContent=c.age+' ans';
+  document.getElementById('reward-child-name').textContent=c.name;
+  document.getElementById('stars-display').textContent=s>0?'⭐'.repeat(Math.min(s,10)):'—';
+  document.getElementById('stars-count').textContent=s+' étoile'+(s!==1?'s':'')+' aujourd\'hui · '+totalSoFar+' au total';
+  const next=REWARDS.find(r=>!c.claimedRewards.includes(r.id)&&r.cost>totalSoFar);
+  document.getElementById('reward-progress').textContent=next?
+    `Encore ${next.cost-totalSoFar} étoile${next.cost-totalSoFar>1?'s':''} pour : ${next.icon} ${next.name}`:
+    '🎉 Toutes les récompenses débloquées !';
+  document.getElementById('prog-txt').textContent=`${done} / ${total} tâches`;
+  document.getElementById('prog-pct-txt').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-fill').style.background=color;
+
+  const list=document.getElementById('task-list');
+  if(!c.tasks.length){list.innerHTML='<div class="empty-msg">Aucune tâche ! Ajoutes-en une ci-dessous 👇</div>';}
+  else{list.innerHTML=c.tasks.map((t,i)=>`
+    <div class="task-item${t.done?' done':''}" onclick="toggle(${i})">
+      <div class="check-big${t.done?' checked':''}">${t.done?'✓':''}</div>
+      <span class="task-icon-big">${t.icon}</span>
+      <div class="task-info">
+        <div class="task-name">${t.name}</div>
+        <div style="font-size:13px;margin-top:2px;">${'⭐'.repeat(t.stars||1)}</div>
+        <span class="task-time-pill">${t.time}</span>
+      </div>
+      <button class="del-btn" onclick="event.stopPropagation();delTask(${i})">×</button>
+    </div>`).join('');}
+
+  // Templates (tâches récurrentes)
+  const existingNames=new Set(c.tasks.map(t=>t.name));
+  const available=TASK_TEMPLATES.filter(t=>!existingNames.has(t.name));
+  const tg=document.getElementById('templates-grid');
+  document.getElementById('templates-box').style.display=available.length?'block':'none';
+  tg.innerHTML=available.map((t,i)=>`
+    <div class="template-chip" onclick="addFromTemplate(${TASK_TEMPLATES.indexOf(t)})">
+      <span class="chip-icon">${t.icon}</span>${t.name}
+    </div>`).join('');
+
+  document.getElementById('rewards-grid').innerHTML=REWARDS.map(r=>{
+    const claimed=c.claimedRewards.includes(r.id);
+    const unlocked=totalSoFar>=r.cost;
+    let cls='reward-card';
+    let status=`<div class="reward-status" style="color:#bbb">${r.cost}⭐</div>`;
+    if(claimed){cls+=' claimed';status='<div class="reward-status" style="color:#4CAF50">✓ Obtenu !</div>';}
+    else if(unlocked){cls+=' unlocked';status='<div class="reward-status" style="color:#FF8C42">🎉 Dispo !</div>';}
+    return `<div class="${cls}" onclick="claimReward('${r.id}','${r.icon}','${r.name}','${r.msg}',${unlocked},${claimed})">
+      <div class="reward-icon">${r.icon}</div>
+      <div class="reward-name">${r.name}</div>
+      <div class="reward-cost">${r.cost} ⭐</div>${status}
+    </div>`;
+  }).join('');
+}
+
+function addFromTemplate(idx){
+  const t=TASK_TEMPLATES[idx];
+  state.children[state.active].tasks.push({...t,done:false});
+  save();render();
+}
+
+function render(){renderDate();renderKidsGrid();renderSummary();renderChildDetail();}
+function setChild(i){state.active=i;render();}
+
+function toggle(i){
+  const c=state.children[state.active];c.tasks[i].done=!c.tasks[i].done;
+  if(c.tasks[i].done){const t=c.tasks[i];showCelebrate(t.icon,t.name,t.stars||1);}
+  save();render();
+}
+
+function showCelebrate(icon,name,stars){
+  const msgs=["Bravo ! 🎊","Super ! 🌟","Excellent ! 🥳","Fantastique ! 🎉","Génial ! ✨"];
+  document.getElementById('cel-icon').textContent=icon;
+  document.getElementById('cel-text').textContent=msgs[Math.floor(Math.random()*msgs.length)];
+  document.getElementById('cel-sub').textContent=`"${name}" — +${'⭐'.repeat(Math.min(stars,5))}`;
+  const el=document.getElementById('celebrate');
+  el.style.display='block';el.classList.add('show');setTimeout(()=>closeCelebrate(),3000);
+}
+function closeCelebrate(){document.getElementById('celebrate').style.display='none';}
+
+function claimReward(id,icon,name,msg,unlocked,claimed){
+  if(claimed){alert(`${icon} ${name} : déjà obtenu !`);return;}
+  if(!unlocked){alert(`Pas encore assez d'étoiles pour ${name} !`);return;}
+  if(!confirm(`Donner la récompense : ${icon} ${name} ?`))return;
+  const c=state.children[state.active];
+  if(!c.claimedRewards)c.claimedRewards=[];
+  c.claimedRewards.push(id);c.totalStars=(c.totalStars||0)+todayStars(c);
+  save();render();showCelebrate(icon,name+' !',0);
+  document.getElementById('cel-sub').textContent=msg;
+}
+
+function delTask(i){
+  if(!confirm('Supprimer cette tâche ?'))return;
+  state.children[state.active].tasks.splice(i,1);save();render();
+}
+
+function addTask(){
+  const name=document.getElementById('new-name').value.trim();
+  const time=document.getElementById('new-time').value;
+  const stars=parseInt(document.getElementById('new-stars').value);
+  if(!name)return;
+  const iconMap={Matin:'🌅',Midi:'🍽️','Après-midi':'🎨',Soir:'🌙'};
+  state.children[state.active].tasks.push({name,icon:iconMap[time]||'📌',time,stars,done:false});
+  document.getElementById('new-name').value='';save();render();
+}
+
+function resetChild(){
+  const c=state.children[state.active];
+  if(!confirm('Réinitialiser les tâches de '+c.name+' ?'))return;
+  c.totalStars=(c.totalStars||0)+todayStars(c);
+  c.tasks.forEach(t=>t.done=false);save();render();
+}
+function resetAll(){
+  if(!confirm('Réinitialiser les tâches de tous les enfants ?'))return;
+  state.children.forEach(c=>{c.totalStars=(c.totalStars||0)+todayStars(c);c.tasks.forEach(t=>t.done=false);});
+  save();render();
+}
+
+// ============================================================
+// MODAL MODIFIER (avec avatar photo)
+// ============================================================
+function openEdit(){
+  editingIdx=state.active;const c=state.children[editingIdx];
+  document.getElementById('edit-name').value=c.name;
+  document.getElementById('edit-age').value=c.age;
+  document.getElementById('edit-bday').value=c.bday||'';
+  currentAvatarData={type:c.photo?'photo':'emoji',value:c.avatar,photo:c.photo||null};
+  renderModalAvatar();
+  switchAvatarTab(c.photo?'photo':'emoji');
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('edit-name').focus(),100);
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+
+function renderModalAvatar(){
+  const prev=document.getElementById('modal-avatar-preview');
+  if(currentAvatarData.photo){
+    prev.innerHTML=`<img src="${currentAvatarData.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+  }else{prev.textContent=currentAvatarData.value||'😊';}
+
+  // Emoji grid
+  document.getElementById('emoji-grid').innerHTML=EMOJIS_LIST.map(e=>`
+    <div class="emoji-opt${currentAvatarData.value===e?' selected':''}" onclick="selectEmoji('${e}')">${e}</div>
+  `).join('');
+}
+
+function selectEmoji(e){
+  currentAvatarData={type:'emoji',value:e,photo:null};renderModalAvatar();
+}
+
+function switchAvatarTab(tab){
+  document.getElementById('atab-emoji').classList.toggle('active',tab==='emoji');
+  document.getElementById('atab-photo').classList.toggle('active',tab==='photo');
+  document.getElementById('avatar-emoji-section').style.display=tab==='emoji'?'block':'none';
+  document.getElementById('avatar-photo-section').style.display=tab==='photo'?'block':'none';
+}
+
+function handleAvatarUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>2*1024*1024){alert('Image trop grande (max 2MB)');return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    currentAvatarData={type:'photo',value:'😊',photo:ev.target.result};
+    renderModalAvatar();switchAvatarTab('photo');
+  };reader.readAsDataURL(file);
+}
+
+function confirmEdit(){
+  const name=document.getElementById('edit-name').value.trim();if(!name)return;
+  const c=state.children[editingIdx];
+  c.name=name;c.age=parseInt(document.getElementById('edit-age').value);
+  c.bday=document.getElementById('edit-bday').value;
+  if(currentAvatarData.photo){c.photo=currentAvatarData.photo;c.avatar='😊';}
+  else{c.photo=null;c.avatar=currentAvatarData.value||'😊';}
+  closeModal();save();render();
+  if(document.getElementById('page-bday').style.display!=='none')renderBday();
+  if(document.getElementById('page-sante').style.display!=='none')renderSante();
+  if(document.getElementById('page-journal').style.display!=='none')renderJournal();
+}
+
+document.getElementById('edit-name').addEventListener('keydown',e=>{if(e.key==='Enter')confirmEdit();});
+document.getElementById('new-name').addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+
+// ============================================================
+// MENU DU JOUR
+// ============================================================
+let activeMenuDay=DAYS[new Date().getDay()-1]||DAYS[0];
+
+function getMenuKey(day,slot){return `menu_${day}_${slot}`;}
+function loadMenu(day,slot){try{const s=localStorage.getItem(getMenuKey(day,slot));return s?JSON.parse(s):[];}catch(e){return[];}}
+function saveMenu(day,slot,items){try{localStorage.setItem(getMenuKey(day,slot),JSON.stringify(items));}catch(e){}}
+
+function renderMenuDayNav(){
+  document.getElementById('menu-day-nav').innerHTML=DAYS.map(d=>`
+    <button class="menu-day-btn${d===activeMenuDay?' active':''}" onclick="setMenuDay('${d}')">${d}</button>`).join('');
+}
+function renderMenuSlot(slot,containerId){
+  const items=loadMenu(activeMenuDay,slot);
+  const el=document.getElementById(containerId);
+  if(!items.length){el.innerHTML='<div class="menu-empty">Rien de prévu — ajoute un aliment 👇</div>';return;}
+  el.innerHTML=items.map((item,i)=>`
+    <div class="menu-item-row">
+      <span class="menu-item-emoji">${getFoodIcon(item)}</span>
+      <span class="menu-item-name">${item}</span>
+      <button class="menu-del-btn" onclick="delMenuItem('${slot}',${i})">×</button>
+    </div>`).join('');
+}
+function renderMenu(){
+  const d=new Date();
+  document.getElementById('menu-date-sub').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  renderMenuDayNav();
+  renderMenuSlot('collation_am','menu-collation-am');
+  renderMenuSlot('diner','menu-diner');
+  renderMenuSlot('collation_pm','menu-collation-pm');
+}
+function setMenuDay(day){activeMenuDay=day;renderMenu();}
+function addMenuItem(slot,inputId){
+  const inp=document.getElementById(inputId);const val=inp.value.trim();if(!val)return;
+  const items=loadMenu(activeMenuDay,slot);items.push(val);
+  saveMenu(activeMenuDay,slot,items);inp.value='';renderMenu();
+}
+function delMenuItem(slot,idx){
+  const items=loadMenu(activeMenuDay,slot);items.splice(idx,1);
+  saveMenu(activeMenuDay,slot,items);renderMenu();
+}
+['add-collation-am','add-diner','add-collation-pm'].forEach((id,i)=>{
+  const slots=['collation_am','diner','collation_pm'];
+  document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addMenuItem(slots[i],id);});
+});
+
+// ============================================================
+// JOURNAL / NOTES
+// ============================================================
+let activeJournalChild=0;
+
+function renderJournal(){
+  const d=new Date();
+  document.getElementById('journal-date-sub').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  // Sélecteur enfant
+  document.getElementById('journal-child-select').innerHTML=state.children.map((c,i)=>`
+    <button class="journal-child-btn${i===activeJournalChild?' active':''}" onclick="setJournalChild(${i})">
+      ${c.photo?`<img src="${c.photo}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px;" />`:`${c.avatar} `}${c.name}
+    </button>`).join('');
+  // Historique
+  const entries=loadExtra('journal',[]).filter(e=>e.childIdx===activeJournalChild);
+  entries.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const hist=document.getElementById('journal-history-list');
+  if(!entries.length){hist.innerHTML='<div class="empty-msg">Aucune note pour cet enfant.</div>';return;}
+  hist.innerHTML=entries.map((e,i)=>`
+    <div class="journal-item">
+      <button class="journal-item-del" onclick="delJournalEntry(${e.id})">×</button>
+      <div class="journal-item-date">${new Date(e.date).toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      <div class="journal-item-child">${e.mood} ${state.children[e.childIdx]?.name||'Enfant'}</div>
+      <div class="journal-item-text">${e.text.replace(/\n/g,'<br>')}</div>
+    </div>`).join('');
+}
+
+function setJournalChild(i){activeJournalChild=i;renderJournal();}
+
+function saveJournalEntry(){
+  const text=document.getElementById('journal-text').value.trim();
+  const mood=document.getElementById('journal-mood').value;
+  if(!text)return;
+  const entries=loadExtra('journal',[]);
+  entries.push({id:Date.now(),childIdx:activeJournalChild,date:new Date().toISOString(),text,mood});
+  saveExtra('journal',entries);
+  document.getElementById('journal-text').value='';
+  showCelebrate('📝','Note enregistrée !',0);
+  document.getElementById('cel-sub').textContent='La note a été sauvegardée.';
+  renderJournal();
+}
+
+function delJournalEntry(id){
+  if(!confirm('Supprimer cette note ?'))return;
+  const entries=loadExtra('journal',[]).filter(e=>e.id!==id);
+  saveExtra('journal',entries);renderJournal();
+}
+
+// ============================================================
+// ACTIVITÉS
+// ============================================================
+function renderActivities(){
+  const acts=loadExtra('activities',[]);
+  acts.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const list=document.getElementById('activity-list');
+  if(!acts.length){list.innerHTML='<div class="empty-msg">Aucune activité planifiée. Ajoutez-en une ! 🎠</div>';return;}
+  list.innerHTML=acts.map((a,i)=>{
+    const date=a.date?new Date(a.date+'T00:00').toLocaleDateString('fr-CA',{weekday:'short',day:'numeric',month:'short'}):'Sans date';
+    return `<div class="activity-card${a.done?' done-act':''}">
+      <div class="activity-icon">${a.type.split(' ')[0]}</div>
+      <div class="activity-info">
+        <div class="activity-name">${a.name}</div>
+        <div class="activity-meta">
+          <span>${date}</span>
+          ${a.time?`<span>🕐 ${a.time}</span>`:''}
+          <span>${a.type}</span>
+        </div>
+        ${a.desc?`<div class="activity-desc">${a.desc}</div>`:''}
+        <div class="activity-actions">
+          <button class="activity-done-btn${a.done?' done':''}" onclick="toggleActivity(${i})">${a.done?'✓ Fait':'Marquer fait'}</button>
+          <button class="activity-del-btn" onclick="delActivity(${i})">Supprimer</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addActivity(){
+  const name=document.getElementById('act-name').value.trim();
+  if(!name)return;
+  const acts=loadExtra('activities',[]);
+  acts.push({
+    name,type:document.getElementById('act-type').value,
+    date:document.getElementById('act-date').value,
+    time:document.getElementById('act-time').value,
+    desc:document.getElementById('act-desc').value.trim(),done:false
+  });
+  saveExtra('activities',acts);
+  document.getElementById('act-name').value='';document.getElementById('act-desc').value='';
+  renderActivities();
+}
+
+function toggleActivity(i){
+  const acts=loadExtra('activities',[]);acts[i].done=!acts[i].done;
+  saveExtra('activities',acts);renderActivities();
+}
+function delActivity(i){
+  if(!confirm('Supprimer cette activité ?'))return;
+  const acts=loadExtra('activities',[]);acts.splice(i,1);
+  saveExtra('activities',acts);renderActivities();
+}
+
+// ============================================================
+// CONTACTS
+// ============================================================
+let activeContactFilter='tous';
+
+function renderContacts(){
+  // Filtre
+  const filters=['tous',...state.children.map(c=>c.name)];
+  document.getElementById('contact-filter').innerHTML=filters.map(f=>`
+    <button class="contact-filter-btn${f===activeContactFilter?' active':''}" onclick="setContactFilter('${f}')">${f==='tous'?'👤 Tous':f}</button>`).join('');
+
+  // Select enfant dans le formulaire
+  document.getElementById('ct-child').innerHTML=`<option value="tous">👨‍👩‍👧 Tous les enfants</option>`+
+    state.children.map((c,i)=>`<option value="${c.name}">${c.avatar} ${c.name}</option>`).join('');
+
+  const contacts=loadExtra('contacts',[]);
+  const filtered=activeContactFilter==='tous'?contacts:contacts.filter(c=>c.child===activeContactFilter||c.child==='tous');
+  const list=document.getElementById('contact-list');
+  if(!filtered.length){list.innerHTML='<div class="empty-msg">Aucun contact. Ajoutez-en un ! 📞</div>';return;}
+  list.innerHTML=filtered.map((c,i)=>{
+    const initials=c.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const realIdx=contacts.indexOf(c);
+    return `<div class="contact-card">
+      <div class="contact-avatar">${initials}</div>
+      <div class="contact-info">
+        <div><span class="contact-name">${c.name}</span><span class="contact-relation">${c.relation}</span></div>
+        ${c.child!=='tous'?`<span class="contact-child-tag">👶 ${c.child}</span>`:''}
+        <div class="contact-phone">📱 <a href="tel:${c.phone}">${c.phone}</a></div>
+      </div>
+      <button class="contact-del" onclick="delContact(${realIdx})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function setContactFilter(f){activeContactFilter=f;renderContacts();}
+
+function addContact(){
+  const name=document.getElementById('ct-name').value.trim();
+  const phone=document.getElementById('ct-phone').value.trim();
+  if(!name||!phone)return;
+  const contacts=loadExtra('contacts',[]);
+  contacts.push({name,relation:document.getElementById('ct-relation').value,phone,child:document.getElementById('ct-child').value});
+  saveExtra('contacts',contacts);
+  document.getElementById('ct-name').value='';document.getElementById('ct-phone').value='';
+  renderContacts();
+}
+
+function delContact(i){
+  if(!confirm('Supprimer ce contact ?'))return;
+  const contacts=loadExtra('contacts',[]);contacts.splice(i,1);
+  saveExtra('contacts',contacts);renderContacts();
+}
+
+// ============================================================
+// SANTÉ
+// ============================================================
+let activeSanteChild=0;
+
+function renderSante(){
+  document.getElementById('sante-child-select').innerHTML=state.children.map((c,i)=>`
+    <button class="sante-child-btn${i===activeSanteChild?' active':''}" onclick="setSanteChild(${i})">
+      ${c.photo?`<img src="${c.photo}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px;" />`:`${c.avatar} `}${c.name}
+    </button>`).join('');
+
+  const sante=loadExtra('sante',{});
+  const key=`child_${activeSanteChild}`;
+  const data=sante[key]||{allergies:[],medicaments:[],notes:[]};
+
+  ['allergies','medicaments','notes'].forEach(type=>{
+    document.getElementById(`sante-${type}`).innerHTML=
+      (data[type]||[]).map((item,i)=>`
+        <span class="sante-tag ${type==='allergies'?'allergie':type==='medicaments'?'medicament':'note'}">
+          ${item}
+          <button onclick="delSanteItem('${type}',${i})" title="Supprimer">×</button>
+        </span>`).join('')||'<span style="font-size:12px;color:#aaa;padding:4px;">Aucun élément</span>';
+  });
+}
+
+function setSanteChild(i){activeSanteChild=i;renderSante();}
+
+function addSanteItem(type){
+  const inputMap={allergie:'sante-allergie-input',medicament:'sante-medicament-input',note:'sante-note-input'};
+  const typeMap={allergie:'allergies',medicament:'medicaments',note:'notes'};
+  const inp=document.getElementById(inputMap[type]);
+  const val=inp.value.trim();if(!val)return;
+  const sante=loadExtra('sante',{});
+  const key=`child_${activeSanteChild}`;
+  if(!sante[key])sante[key]={allergies:[],medicaments:[],notes:[]};
+  sante[key][typeMap[type]].push(val);
+  saveExtra('sante',sante);inp.value='';renderSante();
+}
+
+function delSanteItem(type,idx){
+  const typeMap={allergies:'allergies',medicaments:'medicaments',notes:'notes'};
+  const sante=loadExtra('sante',{});
+  const key=`child_${activeSanteChild}`;
+  if(sante[key]&&sante[key][type]){sante[key][type].splice(idx,1);}
+  saveExtra('sante',sante);renderSante();
+}
+
+// ============================================================
+// RAPPORT HEBDOMADAIRE
+// ============================================================
+let rapportWeekOffset=0;
+
+function getWeekLabel(offset){
+  const d=new Date();d.setDate(d.getDate()+offset*7);
+  const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()||7)-1));
+  const fri=new Date(mon);fri.setDate(mon.getDate()+4);
+  const fmt=dt=>dt.toLocaleDateString('fr-CA',{day:'numeric',month:'short'});
+  return `${fmt(mon)} – ${fmt(fri)} ${mon.getFullYear()}`;
+}
+
+function changeRapportWeek(dir){rapportWeekOffset+=dir;renderRapport();}
+
+function renderRapport(){
+  document.getElementById('rapport-week-label').textContent=
+    rapportWeekOffset===0?'Cette semaine':rapportWeekOffset===-1?'Semaine dernière':getWeekLabel(rapportWeekOffset);
+
+  let totalDone=0,totalTasks=0,totalStars=0,allDoneCount=0;
+  state.children.forEach(c=>{
+    const done=doneTasks(c);const tot=c.tasks.length;
+    totalDone+=done;totalTasks+=tot;totalStars+=todayStars(c)+(c.totalStars||0);
+    if(done===tot&&tot>0)allDoneCount++;
+  });
+
+  document.getElementById('rapport-stats').innerHTML=`
+    <div class="rapport-stat"><div class="rapport-stat-num" style="color:#4CAF50">${totalDone}</div><div class="rapport-stat-label">✅ Tâches faites</div></div>
+    <div class="rapport-stat"><div class="rapport-stat-num" style="color:#FFC107">${totalStars}</div><div class="rapport-stat-label">⭐ Étoiles totales</div></div>
+    <div class="rapport-stat"><div class="rapport-stat-num" style="color:#9C27B0">${allDoneCount}</div><div class="rapport-stat-label">🏆 Tout complété</div></div>
+    <div class="rapport-stat"><div class="rapport-stat-num" style="color:#FF8C42">${totalTasks?Math.round(totalDone/totalTasks*100):0}%</div><div class="rapport-stat-label">📊 Taux global</div></div>`;
+
+  document.getElementById('rapport-tbody').innerHTML=state.children.map((c,i)=>{
+    const done=doneTasks(c);const tot=c.tasks.length;
+    const pct=tot?Math.round(done/tot*100):0;
+    const stars=(c.totalStars||0)+todayStars(c);
+    const color=col(i);
+    const avatarHtml=c.photo
+      ?`<img src="${c.photo}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px;" />`
+      :`${c.avatar} `;
+    return `<tr>
+      <td><span>${avatarHtml}${c.name}</span></td>
+      <td>${done}/${tot}</td>
+      <td style="color:#E67E00;font-weight:700;">${stars} ⭐</td>
+      <td class="rapport-bar-cell"><div class="rapport-bar"><div class="rapport-bar-fill" style="width:${pct}%;background:${color}"></div></div><span style="font-size:10px;color:#888;">${pct}%</span></td>
+      <td>${c.claimedRewards?c.claimedRewards.length:0} 🏆</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportPDF(){
+  const weekLabel=document.getElementById('rapport-week-label').textContent;
+  const win=window.open('','_blank');
+  if(!win){alert('Autorisez les popups pour exporter');return;}
+  const rows=state.children.map((c,i)=>{
+    const done=doneTasks(c);const tot=c.tasks.length;
+    const pct=tot?Math.round(done/tot*100):0;
+    const stars=(c.totalStars||0)+todayStars(c);
+    return `<tr><td>${c.avatar} ${c.name}</td><td>${c.age} ans</td><td>${done}/${tot}</td><td>${pct}%</td><td>${stars}</td><td>${c.claimedRewards?c.claimedRewards.length:0}</td></tr>`;
+  }).join('');
+  const contacts=loadExtra('contacts',[]);
+  const contactRows=contacts.map(c=>`<tr><td>${c.name}</td><td>${c.relation}</td><td>${c.child}</td><td>${c.phone}</td></tr>`).join('');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Rapport Garderie – ${weekLabel}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:20px;color:#2d2d2d;}
+    h1{color:#FF8C42;font-size:22px;}h2{color:#FF6B9D;font-size:16px;margin-top:20px;}
+    table{width:100%;border-collapse:collapse;margin-top:8px;}
+    th{background:#FF8C42;color:white;padding:8px;text-align:left;font-size:12px;}
+    td{padding:7px 8px;border-bottom:1px solid #eee;font-size:12px;}
+    tr:nth-child(even){background:#FFF8F0;}
+    .footer{margin-top:20px;font-size:10px;color:#aaa;text-align:center;}
+    @media print{button{display:none;}}
+  </style></head><body>
+  <h1>⭐ Ma Garderie — Rapport</h1>
+  <p style="color:#888;font-size:13px;">Semaine : ${weekLabel} · Généré le ${new Date().toLocaleDateString('fr-CA')}</p>
+  <button onclick="window.print()" style="padding:8px 20px;background:#FF8C42;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;margin-bottom:10px;">🖨️ Imprimer / Enregistrer PDF</button>
+  <h2>📊 Progrès des enfants</h2>
+  <table><thead><tr><th>Enfant</th><th>Âge</th><th>Tâches</th><th>%</th><th>⭐ Étoiles</th><th>🏆 Récomp.</th></tr></thead>
+  <tbody>${rows}</tbody></table>
+  ${contacts.length?`<h2>📞 Contacts parents</h2><table><thead><tr><th>Nom</th><th>Relation</th><th>Enfant</th><th>Téléphone</th></tr></thead><tbody>${contactRows}</tbody></table>`:''}
+  <div class="footer">Ma Garderie — Application de gestion</div>
+  </body></html>`);
+  win.document.close();
+}
+
+// ============================================================
+// FOURNITURES
+// ============================================================
+let activeFourCat='Tous';
+
+function renderFournitures(){
+  const items=loadExtra('fournitures',[]);
+  const cats=['Tous',...new Set(items.map(i=>i.cat))];
+  const done=items.filter(i=>i.checked).length;
+  const total=items.length;
+
+  // Progrès
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('four-progress').innerHTML=`
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:5px;">
+      <span>${done} / ${total} articles achetés</span><span>${pct}%</span>
+    </div>
+    <div style="background:#BBDEFB;border-radius:10px;height:8px;overflow:hidden;">
+      <div style="width:${pct}%;height:100%;border-radius:10px;background:#1565C0;transition:width .4s;"></div>
+    </div>`;
+
+  // Filtres
+  document.getElementById('four-filter').innerHTML=cats.map(cat=>`
+    <button class="fournitures-filter-btn${cat===activeFourCat?' active':''}" onclick="setFourCat('${cat}')">${cat}</button>`).join('');
+
+  const filtered=activeFourCat==='Tous'?items:items.filter(i=>i.cat===activeFourCat);
+  const list=document.getElementById('fournitures-list');
+  if(!filtered.length){list.innerHTML='<div class="empty-msg">Aucun article. Ajoutez-en un ! 🛒</div>';return;}
+  list.innerHTML=filtered.map((item,fi)=>{
+    const realIdx=items.indexOf(item);
+    return `<div class="fournitures-item${item.checked?' checked-item':''}">
+      <div class="fournitures-check${item.checked?' on':''}" onclick="toggleFourniture(${realIdx})">${item.checked?'✓':''}</div>
+      <span class="fournitures-name">${item.name}</span>
+      <span class="fournitures-qty">x${item.qty}</span>
+      <span class="fournitures-cat">${item.cat}</span>
+      <button class="fournitures-del" onclick="delFourniture(${realIdx})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function setFourCat(cat){activeFourCat=cat;renderFournitures();}
+
+function addFourniture(){
+  const name=document.getElementById('four-name').value.trim();if(!name)return;
+  const items=loadExtra('fournitures',[]);
+  items.push({name,qty:parseInt(document.getElementById('four-qty').value)||1,cat:document.getElementById('four-cat').value,checked:false});
+  saveExtra('fournitures',items);document.getElementById('four-name').value='';
+  renderFournitures();
+}
+
+function toggleFourniture(i){
+  const items=loadExtra('fournitures',[]);items[i].checked=!items[i].checked;
+  saveExtra('fournitures',items);renderFournitures();
+}
+function delFourniture(i){
+  const items=loadExtra('fournitures',[]);items.splice(i,1);
+  saveExtra('fournitures',items);renderFournitures();
+}
+function clearCheckedFournitures(){
+  if(!confirm('Supprimer tous les articles achetés ?'))return;
+  const items=loadExtra('fournitures',[]).filter(i=>!i.checked);
+  saveExtra('fournitures',items);renderFournitures();
+}
+document.getElementById('four-name').addEventListener('keydown',e=>{if(e.key==='Enter')addFourniture();});
+
+// ============================================================
+// ANNIVERSAIRES
+// ============================================================
+function daysUntilBday(bdayStr){
+  if(!bdayStr)return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  const bday=new Date(bdayStr);
+  const next=new Date(today.getFullYear(),bday.getMonth(),bday.getDate());
+  if(next<today)next.setFullYear(today.getFullYear()+1);
+  return Math.round((next-today)/(1000*60*60*24));
+}
+function bdayFormatted(bdayStr){
+  if(!bdayStr)return '';
+  const d=new Date(bdayStr);return d.toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
+}
+function nextAge(bdayStr,currentAge){
+  if(!bdayStr)return currentAge;
+  const today=new Date();today.setHours(0,0,0,0);
+  const bday=new Date(bdayStr);
+  const next=new Date(today.getFullYear(),bday.getMonth(),bday.getDate());
+  if(next<today)next.setFullYear(today.getFullYear()+1);
+  return next.getFullYear()-bday.getFullYear();
+}
+
+function renderBday(){
+  const today=new Date();today.setHours(0,0,0,0);
+  document.getElementById('bday-banner-sub').textContent=today.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const alerts=[];
+  const cards=state.children.map((c,i)=>{
+    const days=daysUntilBday(c.bday);
+    let countdownClass='far',countdownTxt='Aucune date';
+    if(days===null){countdownTxt='Date non saisie';}
+    else if(days===0){countdownTxt="🎉 C'est aujourd'hui !";countdownClass='today2';alerts.push({c,i,days});}
+    else if(days<=7){countdownTxt=`Dans ${days} jour${days>1?'s':''}`;countdownClass=days<=3?'soon2':'week';alerts.push({c,i,days});}
+    else{countdownTxt=`Dans ${days} jours`;}
+    const na=c.bday?nextAge(c.bday,c.age):c.age;
+    const cardClass=days===0?'bday-card today-bday':days!==null&&days<=7?'bday-card soon':'bday-card';
+    const avatarHtml=c.photo
+      ?`<img src="${c.photo}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;" />`
+      :c.avatar;
+    return `<div class="${cardClass}">
+      <div class="bday-avatar" style="background:${col(i)}22;border:2px solid ${col(i)};">${avatarHtml}</div>
+      <div class="bday-info">
+        <div class="bday-name">${c.name}</div>
+        <div class="bday-date">${c.bday?'🎂 '+bdayFormatted(c.bday):'<span class="bday-no-date">Pas encore de date</span>'}</div>
+        ${c.bday?`<div class="bday-age-next">Aura ${na} ans</div>`:''}
+        <span class="bday-countdown ${countdownClass}">${countdownTxt}</span>
+      </div>
+      <button class="bday-edit-btn" onclick="openEditFromBday(${i})">✏️ Modifier</button>
+    </div>`;
+  });
+  document.getElementById('bday-grid').innerHTML=cards.join('');
+  const alertsEl=document.getElementById('bday-alerts');
+  if(!alerts.length){alertsEl.innerHTML='';return;}
+  alerts.sort((a,b)=>a.days-b.days);
+  alertsEl.innerHTML=alerts.map(({c,i,days})=>{
+    const isToday=days===0;
+    return `<div class="bday-alert${isToday?' today':''}">
+      <div class="bday-alert-icon">${isToday?'🎉':'⏰'}</div>
+      <div class="bday-alert-text">
+        <div class="bday-alert-name">${isToday?`🎂 Joyeux anniversaire ${c.name} !`:`Anniversaire de ${c.name} bientôt !`}</div>
+        <div class="bday-alert-days">${isToday?"C'est aujourd'hui ! Pensez à célébrer 🎈":`Dans ${days} jour${days>1?'s':''} — préparez la célébration !`}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEditFromBday(i){state.active=i;openEdit();}
+
+// ============================================================
+// NAVIGATION ONGLETS
+// ============================================================
+const ALL_PAGES=['taches','menu','journal','activites','contacts','sante','rapport','fournitures','bday'];
+
+function showPage(page){
+  ALL_PAGES.forEach(p=>{
+    document.getElementById('page-'+p).style.display=p===page?'block':'none';
+    document.getElementById('tab-'+p).classList.toggle('active',p===page);
+  });
+  if(page==='menu')renderMenu();
+  if(page==='journal')renderJournal();
+  if(page==='activites')renderActivities();
+  if(page==='contacts')renderContacts();
+  if(page==='sante')renderSante();
+  if(page==='rapport')renderRapport();
+  if(page==='fournitures')renderFournitures();
+  if(page==='bday')renderBday();
+  // Scroll to top
+  window.scrollTo(0,0);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+load();render();
+
+// Init date inputs
+document.getElementById('act-date').value=new Date().toISOString().slice(0,10);
+document.getElementById('act-time').value='09:00';
+
+// Keyboard listeners pour auth
+document.getElementById('auth-password').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+document.getElementById('auth-email').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('auth-password').focus(); });
+</script>
+</body>
+</html>
