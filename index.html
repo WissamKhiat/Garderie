@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Garderie - Tâches et Étoiles</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;background:#FFF8F0;min-height:100vh;}
+
+.top-bar{background:linear-gradient(135deg,#FF6B9D,#FF8C42);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+.top-bar h1{color:white;font-size:20px;font-weight:700;}
+.top-bar button:hover{background:rgba(255,255,255,0.4)!important;}
+.top-bar .date{color:rgba(255,255,255,0.9);font-size:12px;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;}
+
+.kids-overview{background:white;padding:16px;border-bottom:3px solid #FFE0CC;}
+.kids-overview-title{font-size:12px;font-weight:700;color:#aaa;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;}
+.kids-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+@media(max-width:600px){.kids-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:380px){.kids-grid{grid-template-columns:repeat(2,1fr);}}
+
+.kid-card{background:#FFF8F0;border:2.5px solid #FFD4B0;border-radius:16px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.kid-card:hover{transform:translateY(-3px);border-color:#FF8C42;}
+.kid-card.active{transform:translateY(-4px);}
+.kid-avatar{font-size:30px;margin-bottom:4px;line-height:1;}
+.kid-name{font-size:12px;font-weight:700;color:#2d2d2d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kid-age{font-size:10px;color:#bbb;margin-top:1px;}
+.kid-stars{font-size:14px;margin-top:5px;font-weight:700;color:#E67E00;}
+.kid-prog-bar{background:#ffe8d6;border-radius:6px;height:6px;margin-top:6px;overflow:hidden;}
+.kid-prog-fill{height:100%;border-radius:6px;transition:width .4s;}
+.kid-tasks-count{font-size:10px;color:#aaa;margin-top:3px;}
+.kid-all-done{position:absolute;top:-7px;right:-7px;background:#4CAF50;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid white;}
+
+.global-summary{background:white;padding:12px 16px;display:flex;gap:10px;border-bottom:2px solid #FFE0CC;flex-wrap:wrap;}
+.g-card{flex:1;min-width:60px;text-align:center;background:#FFF8F0;border-radius:10px;padding:8px 4px;border:1.5px solid #FFD4B0;}
+.g-num{font-size:20px;font-weight:700;}
+.g-label{font-size:10px;color:#888;margin-top:1px;}
+
+.main{padding:16px;max-width:720px;margin:0 auto;}
+
+.child-card{background:white;border-radius:20px;padding:16px;margin-bottom:14px;border:2px solid #FFD4B0;display:flex;align-items:center;gap:14px;}
+.avatar-big{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+.child-info{flex:1;}
+.child-name-row{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.child-name-big{font-size:18px;font-weight:700;color:#2d2d2d;}
+.age-badge{background:#FFE0CC;color:#C84B00;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:600;}
+.stars-row{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.stars-count{font-size:12px;color:#888;}
+.reward-progress{font-size:12px;color:#FF8C42;font-weight:600;margin-top:3px;}
+.edit-btn{background:none;border:1.5px solid #ddd;border-radius:10px;padding:6px 12px;font-size:12px;color:#666;cursor:pointer;}
+.edit-btn:hover{background:#f5f5f5;}
+
+.prog-wrap{margin-bottom:14px;}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:5px;}
+.prog-bar{background:#ffe8d6;border-radius:10px;height:10px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:10px;transition:width .5s;}
+
+.section-title{font-size:14px;font-weight:700;color:#555;margin-bottom:10px;}
+.tasks-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.task-item{display:flex;align-items:center;gap:12px;padding:13px 14px;background:white;border-radius:14px;border:2px solid #F0F0F0;cursor:pointer;transition:all .15s;user-select:none;}
+.task-item:hover{border-color:#FFD4B0;transform:translateY(-1px);}
+.task-item.done{background:#F0FBF5;border-color:#A8E6C0;}
+.task-item.done .task-name{color:#2d7a4a;text-decoration:line-through;}
+.task-icon-big{font-size:28px;flex-shrink:0;}
+.task-info{flex:1;}
+.task-name{font-size:14px;font-weight:600;color:#2d2d2d;}
+.task-time-pill{font-size:10px;background:#FFF3E0;color:#E65100;border-radius:6px;padding:2px 7px;margin-top:3px;display:inline-block;font-weight:600;}
+.check-big{width:30px;height:30px;border-radius:50%;border:2.5px solid #ddd;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;}
+.check-big.checked{background:#4CAF50;border-color:#4CAF50;color:white;}
+.del-btn{background:none;border:none;font-size:18px;color:#ddd;cursor:pointer;padding:0 4px;}
+.del-btn:hover{color:#f44336;}
+
+.rewards-section{background:white;border-radius:18px;padding:16px;margin-bottom:14px;border:2px solid #FFD4B0;}
+.rewards-title{font-size:14px;font-weight:700;color:#2d2d2d;margin-bottom:12px;}
+.rewards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;}
+.reward-card{background:#FFF8F0;border:2px solid #FFD4B0;border-radius:12px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;}
+.reward-card:hover{border-color:#FF8C42;transform:translateY(-2px);}
+.reward-card.unlocked{background:#FFF3CD;border-color:#FFC107;}
+.reward-card.claimed{background:#E8F5E9;border-color:#4CAF50;}
+.reward-icon{font-size:26px;margin-bottom:4px;}
+.reward-name{font-size:11px;font-weight:700;color:#2d2d2d;}
+.reward-cost{font-size:10px;color:#FF8C42;margin-top:2px;font-weight:600;}
+.reward-status{font-size:10px;font-weight:700;margin-top:3px;}
+
+.add-box{background:white;border-radius:14px;padding:14px;border:2px solid #FFD4B0;margin-bottom:14px;}
+.add-box h3{font-size:13px;font-weight:700;color:#555;margin-bottom:10px;}
+.add-row{display:flex;gap:8px;flex-wrap:wrap;}
+.add-row input,.add-row select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;background:white;}
+.add-row input{flex:1;min-width:140px;}
+.add-row input:focus,.add-row select:focus{border-color:#FF8C42;}
+.add-row button{padding:8px 16px;background:#FF8C42;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.add-row button:hover{background:#E67030;}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.btn-reset{flex:1;padding:9px;background:white;border:1.5px solid #ddd;border-radius:10px;font-size:12px;color:#666;cursor:pointer;font-weight:600;}
+.btn-reset:hover{background:#f5f5f5;}
+.btn-reset-all{flex:1;padding:9px;background:white;border:1.5px solid #ffaaaa;border-radius:10px;font-size:12px;color:#e53935;cursor:pointer;font-weight:600;}
+.btn-reset-all:hover{background:#fff5f5;}
+
+.celebrate{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:24px;padding:28px 36px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);z-index:200;display:none;}
+.celebrate.show{display:block;animation:popIn .3s ease;}
+@keyframes popIn{from{transform:translate(-50%,-50%) scale(0.5);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.celebrate-icon{font-size:60px;margin-bottom:10px;}
+.celebrate-text{font-size:20px;font-weight:700;color:#2d2d2d;margin-bottom:4px;}
+.celebrate-sub{font-size:14px;color:#888;margin-bottom:18px;}
+.celebrate-close{background:#FF8C42;color:white;border:none;border-radius:10px;padding:9px 28px;font-size:14px;font-weight:700;cursor:pointer;}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:white;border-radius:20px;padding:22px;width:320px;box-shadow:0 20px 40px rgba(0,0,0,0.15);}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:12px;color:#2d2d2d;}
+.modal input,.modal select{width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:10px;outline:none;}
+.modal input:focus,.modal select:focus{border-color:#FF8C42;}
+.modal-btns{display:flex;gap:8px;}
+.modal-btns button{flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;}
+.btn-cancel{background:#f5f5f5;color:#666;}
+.btn-ok{background:#FF8C42;color:white;}
+.empty-msg{text-align:center;padding:20px;color:#aaa;font-size:13px;}
+
+/* ONGLETS NAVIGATION */
+.nav-tabs{background:white;display:flex;border-bottom:3px solid #FFE0CC;}
+.nav-tab{flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:#aaa;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-3px;transition:all .15s;}
+.nav-tab:hover{color:#FF8C42;background:#FFF8F0;}
+.nav-tab.active{color:#FF8C42;border-bottom-color:#FF8C42;}
+
+/* MENU DU JOUR */
+.menu-page{padding:16px;max-width:720px;margin:0 auto;}
+.menu-date-bar{background:linear-gradient(135deg,#FF8C42,#FF6B9D);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.menu-date-title{color:white;font-size:16px;font-weight:700;}
+.menu-date-sub{color:rgba(255,255,255,0.85);font-size:12px;}
+.menu-section{background:white;border-radius:18px;padding:18px;margin-bottom:14px;border:2px solid #FFD4B0;}
+.menu-section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.menu-section-icon{font-size:32px;}
+.menu-section-title{font-size:16px;font-weight:700;color:#2d2d2d;}
+.menu-section-time{font-size:11px;font-weight:600;border-radius:8px;padding:2px 8px;margin-left:auto;}
+.menu-item-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FFF8F0;border-radius:12px;margin-bottom:8px;border:1.5px solid #FFE0CC;}
+.menu-item-emoji{font-size:22px;flex-shrink:0;}
+.menu-item-name{flex:1;font-size:14px;font-weight:600;color:#2d2d2d;}
+.menu-item-allergen{font-size:10px;color:#888;margin-top:2px;}
+.menu-edit-btn{background:none;border:1px solid #ddd;border-radius:6px;padding:3px 8px;font-size:11px;color:#888;cursor:pointer;}
+.menu-edit-btn:hover{background:#f5f5f5;}
+.menu-add-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.menu-add-row input{flex:1;min-width:140px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;outline:none;}
+.menu-add-row input:focus{border-color:#FF8C42;}
+.menu-add-row button{padding:8px 14px;background:#FF8C42;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.menu-add-row button:hover{background:#E67030;}
+.menu-del-btn{background:none;border:none;font-size:16px;color:#ddd;cursor:pointer;}
+.menu-del-btn:hover{color:#f44336;}
+.menu-empty{text-align:center;padding:16px;color:#ccc;font-size:13px;}
+.menu-nav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.menu-day-btn{padding:8px 14px;border-radius:20px;border:1.5px solid #FFD4B0;background:white;font-size:12px;font-weight:600;color:#888;cursor:pointer;transition:all .15s;}
+.menu-day-btn:hover{border-color:#FF8C42;color:#FF8C42;}
+.menu-day-btn.active{background:#FF8C42;color:white;border-color:#FF8C42;}
+
+/* ANNIVERSAIRES */
+.bday-page{padding:16px;max-width:720px;margin:0 auto;}
+.bday-banner{background:linear-gradient(135deg,#9C27B0,#FF6B9D);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.bday-banner-title{color:white;font-size:16px;font-weight:700;}
+.bday-banner-sub{color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;}
+.bday-alert{background:#FFF3CD;border:2px solid #FFC107;border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+.bday-alert-icon{font-size:36px;flex-shrink:0;}
+.bday-alert-text{flex:1;}
+.bday-alert-name{font-size:15px;font-weight:700;color:#2d2d2d;}
+.bday-alert-days{font-size:13px;color:#856404;margin-top:2px;}
+.bday-alert.today{background:#E8F5E9;border-color:#4CAF50;}
+.bday-alert.today .bday-alert-days{color:#1B5E20;}
+.bday-grid{display:flex;flex-direction:column;gap:10px;}
+.bday-card{background:white;border-radius:16px;padding:14px 16px;border:2px solid #FFD4B0;display:flex;align-items:center;gap:14px;transition:all .2s;}
+.bday-card.soon{border-color:#FFC107;background:#FFFDE7;}
+.bday-card.today-bday{border-color:#4CAF50;background:#F1F8E9;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(76,175,80,0.3)}50%{box-shadow:0 0 0 8px rgba(76,175,80,0)}}
+.bday-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.bday-info{flex:1;}
+.bday-name{font-size:15px;font-weight:700;color:#2d2d2d;}
+.bday-date{font-size:12px;color:#888;margin-top:2px;}
+.bday-countdown{font-size:12px;font-weight:700;border-radius:20px;padding:4px 12px;margin-top:4px;display:inline-block;}
+.bday-countdown.far{background:#F5F5F5;color:#888;}
+.bday-countdown.week{background:#FFF3CD;color:#856404;}
+.bday-countdown.soon2{background:#FFE0B2;color:#E65100;}
+.bday-countdown.today2{background:#E8F5E9;color:#1B5E20;}
+.bday-edit-btn{background:none;border:1px solid #ddd;border-radius:8px;padding:5px 10px;font-size:11px;color:#888;cursor:pointer;}
+.bday-edit-btn:hover{background:#f5f5f5;}
+.bday-no-date{font-size:11px;color:#ccc;font-style:italic;}
+.bday-age-next{font-size:11px;color:#9C27B0;font-weight:600;margin-top:2px;}
+</style>
+
+<!-- Firebase SDKs -->
+<script>
+// Chargement Firebase avec détection mode local/en ligne
+window.FIREBASE_LOADED = false;
+window.IS_LOCAL = window.location.protocol === 'file:';
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js" onerror="window.FIREBASE_LOADED=false;"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js" onerror="window.FIREBASE_LOADED=false;"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js" onerror="window.FIREBASE_LOADED=false;window.firebaseFailed=true;initLocalMode();"></script>
+
+<script>
+/* ══ FIREBASE ══ */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBCATHjxwPEaTZbK5DXDD3DoVxovoOaCkM",
+  authDomain: "ma-garderie-2a877.firebaseapp.com",
+  projectId: "ma-garderie-2a877",
+  storageBucket: "ma-garderie-2a877.firebasestorage.app",
+  messagingSenderId: "358286025456",
+  appId: "1:358286025456:web:46dad2eb98c7a9b2c8b2d4"
+};
+// Mode local ou en ligne
+let auth = null, db = null, currentUser = null;
+
+function initLocalMode(){
+  console.log('Mode local activé - Firebase non disponible');
+  // Cacher écran auth, afficher app directement
+  const authScreen = document.getElementById('auth-screen');
+  const appScreen = document.getElementById('app-content') || document.getElementById('app-screen');
+  if(authScreen) authScreen.style.display = 'none';
+  if(appScreen) appScreen.style.display = 'block';
+  // Charger données locales
+  try{
+    const s = localStorage.getItem('garderie_v4');
+    if(s) state = JSON.parse(s);
+  }catch(e){}
+  if(typeof load === 'function') load();
+  if(typeof render === 'function') render();
+  if(typeof updateDate === 'function') updateDate();
+}
+
+try {
+  if(typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    window.FIREBASE_LOADED = true;
+  } else {
+    initLocalMode();
+  }
+} catch(e) {
+  console.log('Firebase error:', e);
+  initLocalMode();
+}
+
+function doLogin(){
+  if(!auth){ alert(lang==="fr"?"Mode local - pas de connexion requise":"Local mode - no login required"); initLocalMode(); return; }
+  const email = document.getElementById('auth-email').value.trim();
+  const pwd = document.getElementById('auth-pwd').value;
+  const err = document.getElementById('auth-err');
+  err.style.display='none';
+  if(!email||!pwd){err.textContent='Veuillez remplir tous les champs.';err.style.display='block';return;}
+  auth.signInWithEmailAndPassword(email, pwd).catch(e=>{
+    err.textContent = e.code==='auth/wrong-password'||e.code==='auth/user-not-found' ? 'Email ou mot de passe incorrect.' : 'Erreur de connexion.';
+    err.style.display='block';
+  });
+}
+
+// Auto-detect local mode on page load
+window.addEventListener('load', function(){
+  if(typeof firebase === 'undefined' || window.firebaseFailed){
+    console.log('Firebase not available - switching to local mode');
+    initLocalMode();
+  }
+});
+
+// Auth state only if Firebase loaded
+if(auth) auth.onAuthStateChanged(user => {
+  if(user){
+    currentUser = user;
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app-content').style.display='block';
+    // Load from Firestore
+    db.collection('garderies').doc(user.uid).get().then(doc=>{
+      if(doc.exists && doc.data().state){
+        try{state=JSON.parse(doc.data().state);}catch(e){}
+      }
+      load(); render();
+    }).catch(()=>{load();render();});
+  } else {
+    currentUser = null;
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('app-content').style.display='none';
+  }
+});
+
+/* Override save to include Firebase */
+const _origSave = save;
+function saveToFirebase(){
+  try{localStorage.setItem('garderie_v4',JSON.stringify(state));}catch(e){}
+  if(currentUser){
+    db.collection('garderies').doc(currentUser.uid)
+      .set({state:JSON.stringify(state),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+      .catch(e=>console.log('Firebase save error',e));
+  }
+}
+
+
+/* ══ BILINGUAL FR/EN ══ */
+let currentLang = 'fr';
+
+const TRANSLATIONS = {
+  fr: {
+    appTitle: 'Ma Garderie',
+    authSub: 'Connectez-vous pour continuer',
+    authEmail: 'Adresse courriel',
+    authPwd: 'Mot de passe',
+    tabTaches: 'Tâches',
+    tabMenu: 'Menu du jour',
+    tabBday: 'Anniversaires',
+    allKids: '👶 Tous les enfants',
+    gDone: '✅ Faites',
+    gTotal: '📋 Total',
+    gStars: '⭐ Étoiles',
+    gProg: '📈 Progrès',
+    addTask: '+ Ajouter une tâche',
+    taskPlaceholder: 'Nouvelle tâche...',
+    taskTime: { matin: '🌅 Matin', aprem: '☀️ Après-midi', soir: '🌙 Soir' },
+    saveBtn: '💾 Enregistrer',
+    cancelBtn: 'Annuler',
+    resetDay: '🔄 Réinitialiser',
+    morning: '🌅 Matin',
+    afternoon: '☀️ Après-midi',
+    evening: '🌙 Soir',
+    allDay: '⏰ Toute la journée',
+    sectionTitle: currentLang==='fr'?'📋 Tâches du jour':'📋 Today\'s tasks',
+    rewardProgress: 'étoiles pour',
+    addFood: '+ Ajouter un aliment',
+    menuTitle: 'Menu du jour',
+    bdayTitle: 'Anniversaires',
+    logoutBtn: 'Déconnexion',
+    connectedAs: 'Connectée',
+    today: 'Aujourd\'hui',
+    noTask: 'Aucune tâche pour aujourd\'hui',
+    taskDone: '✅ Tâche accomplie !',
+    editChild: '✏️ Modifier',
+    editTitle: "Modifier l'enfant",
+    nameLbl: 'Prénom',
+    ageLbl: 'Âge',
+    bdayLbl: 'Date de naissance',
+    rewardLbl: 'Étoiles pour autocollant',
+    avatarLbl: 'Avatar',
+    okBtn: 'Enregistrer',
+    collAmLbl: '🍎 Collation du matin',
+    dinerLbl: '🥗 Dîner',
+    collPmLbl: "🍊 Collation de l'après-midi",
+    addItem: '+ Ajouter',
+    noItem: 'Rien de prévu — ajoute un aliment 👇',
+    bdayBannerTitle: '🎂 Anniversaires des enfants',
+    upcomingBday: 'bientôt !',
+    todayBday: 'C\'est aujourd\'hui !',
+    daysLeft: 'jours',
+    noBday: 'Date non saisie',
+    nextAge: 'Aura',
+    yearsOld: 'ans',
+    connectedLabel: 'Connectée',
+    educatriceLabel: 'Éducatrice',
+  },
+  en: {
+    appTitle: 'My Daycare',
+    authSub: 'Sign in to continue',
+    authEmail: 'Email address',
+    authPwd: 'Password',
+    tabTaches: 'Tasks',
+    tabMenu: 'Daily Menu',
+    tabBday: 'Birthdays',
+    allKids: '👶 All children',
+    gDone: '✅ Done',
+    gTotal: '📋 Total',
+    gStars: '⭐ Stars',
+    gProg: '📈 Progress',
+    addTask: '+ Add a task',
+    taskPlaceholder: 'New task...',
+    saveBtn: '💾 Save',
+    cancelBtn: 'Cancel',
+    resetDay: '🔄 Reset day',
+    morning: '🌅 Morning',
+    afternoon: '☀️ Afternoon',
+    evening: '🌙 Evening',
+    allDay: '⏰ All day',
+    sectionTitle: "📋 Today's tasks",
+    rewardProgress: 'stars for',
+    addFood: '+ Add food item',
+    menuTitle: 'Daily menu',
+    bdayTitle: 'Birthdays',
+    logoutBtn: 'Sign out',
+    connectedAs: 'Connected',
+    today: 'Today',
+    noTask: 'No tasks for today',
+    taskDone: '✅ Task completed!',
+    editChild: '✏️ Edit',
+    editTitle: 'Edit child',
+    nameLbl: 'First name',
+    ageLbl: 'Age',
+    bdayLbl: 'Date of birth',
+    rewardLbl: 'Stars for sticker',
+    avatarLbl: 'Avatar',
+    okBtn: 'Save',
+    collAmLbl: '🍎 Morning snack',
+    dinerLbl: '🥗 Lunch',
+    collPmLbl: '🍊 Afternoon snack',
+    addItem: '+ Add',
+    noItem: 'Nothing planned — add a food item 👇',
+    bdayBannerTitle: "🎂 Children's birthdays",
+    upcomingBday: 'soon!',
+    todayBday: "It's today!",
+    daysLeft: 'days',
+    noBday: 'No date set',
+    nextAge: 'Will be',
+    yearsOld: 'years old',
+    connectedLabel: 'Connected',
+    educatriceLabel: 'Educator',
+  }
+};
+
+function t(key){ return TRANSLATIONS[currentLang][key] || TRANSLATIONS['fr'][key] || key; }
+
+function doLogout(){
+  if(auth && auth.signOut){
+    auth.signOut().then(function(){
+      currentUser=null;
+      document.getElementById('auth-screen').style.display='flex';
+      document.getElementById('app-content').style.display='none';
+      closeSettings();
+    }).catch(function(e){console.log('Logout error',e);});
+  } else {
+    currentUser=null;
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('app-content').style.display='none';
+    closeSettings();
+  }
+}
+
+function openSettings(){
+  document.getElementById('settings-modal').style.display='flex';
+  const emailEl=document.getElementById('settings-email');
+  if(emailEl) emailEl.textContent=(currentUser&&currentUser.email)?currentUser.email:'Mode local';
+  const lsb=document.getElementById('lang-settings-btn');
+  if(lsb) lsb.textContent=currentLang==='fr'?'🌍 Changer la langue → EN':'🌍 Change language → FR';
+}
+
+function closeSettings(){
+  document.getElementById('settings-modal').style.display='none';
+}
+
+function toggleLang(){
+  currentLang = currentLang === 'fr' ? 'en' : 'fr';
+  document.getElementById('lang-btn').textContent = '🌍 ' + (currentLang === 'fr' ? 'EN' : 'FR');
+  applyTranslations();
+  render();
+}
+
+function applyTranslations(){
+  const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  const setPlaceholder = (id, val) => { const el = document.getElementById(id); if(el) el.placeholder = val; };
+
+  setTxt('app-title', t('appTitle'));
+  setTxt('auth-sub-txt', t('authSub'));
+  setTxt('auth-email-lbl', t('authEmail'));
+  setTxt('auth-pwd-lbl', t('authPwd'));
+  setTxt('tab-taches-txt', t('tabTaches'));
+  setTxt('tab-menu-txt', t('tabMenu'));
+  setTxt('tab-bday-txt', t('tabBday'));
+  setTxt('all-kids-txt', t('allKids'));
+  setTxt('g-done-txt', t('gDone'));
+  setTxt('g-total-txt', t('gTotal'));
+  setTxt('g-stars-txt', t('gStars'));
+  setTxt('g-prog-txt', t('gProg'));
+
+  // Auth screen labels
+  const authEmailInput = document.getElementById('auth-email');
+  if(authEmailInput) authEmailInput.placeholder = currentLang==='fr'?'votre@email.com':'your@email.com';
+  const authPwdInput = document.getElementById('auth-pwd');
+  if(authPwdInput) authPwdInput.placeholder = currentLang==='fr'?'••••••••':'••••••••';
+
+  // Login button
+  const loginBtn = document.querySelector('#auth-screen button[onclick="doLogin()"]');
+  if(loginBtn) loginBtn.textContent = currentLang==='fr'?'Se connecter':'Sign in';
+
+  // Top bar connected label
+  const connEl = document.querySelector('.top-bar-status');
+  if(connEl) connEl.textContent = t('connectedLabel');
+
+  // Menu section labels
+  setTxt('collam-title', t('collAmLbl'));
+  setTxt('diner-title', t('dinerLbl'));
+  setTxt('collpm-title', t('collPmLbl'));
+
+  // Bday banner
+  setTxt('bday-banner-title', t('bdayBannerTitle'));
+
+  // Update document title
+  document.title = t('appTitle');
+  document.getElementById('app-title').textContent = t('appTitle');
+  const lb = document.getElementById('lang-btn');
+  if(lb) lb.textContent = '🌍 ' + (currentLang==='fr' ? 'EN' : 'FR');
+  const lsb = document.getElementById('lang-settings-btn');
+  if(lsb) lsb.textContent = currentLang==='fr' ? '🌍 Changer la langue → EN' : '🌍 Change language → FR';
+  const scl = document.getElementById('settings-connected-lbl');
+  if(scl) scl.textContent = currentLang==='fr' ? 'Connectée' : 'Connected';
+}
+
+</script>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" style="display:flex;min-height:100vh;align-items:center;justify-content:center;background:#FFF8F0;">
+  <div style="background:white;border-radius:20px;padding:2rem;width:100%;max-width:380px;border:2px solid #FFD4B0;box-shadow:0 10px 40px rgba(0,0,0,0.1);">
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="font-size:48px;">⭐</div>
+      <div style="font-size:20px;font-weight:700;color:#2d2d2d;">Ma Garderie</div>
+      <div style="font-size:13px;color:#888;margin-top:4px;"><span id="auth-sub-txt">Connectez-vous pour continuer</span></div>
+    </div>
+    <div id="auth-err" style="background:#FFEBEE;color:#C62828;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:none;"></div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;"><span id="auth-email-lbl">Adresse courriel</span></label>
+      <input type="email" id="auth-email" placeholder="votre@email.com" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('auth-pwd').focus()">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;"><span id="auth-pwd-lbl">Mot de passe</span></label>
+      <input type="password" id="auth-pwd" placeholder="••••••••" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()" style="width:100%;padding:11px;background:linear-gradient(135deg,#FF6B9D,#FF8C42);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">Se connecter</button>
+  </div>
+</div>
+
+<!-- APP CONTENT -->
+<div id="app-content" style="display:none;">
+
+<div class="top-bar">
+  <h1>⭐ <span id="app-title">Ma Garderie</span></h1>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="date" id="date-label"></span>
+    <button onclick="toggleLang()" style="background:rgba(255,255,255,0.25);border:none;color:white;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;" id="lang-btn">🌍 EN</button>
+    <button onclick="openSettings()" style="background:rgba(255,255,255,0.25);border:none;color:white;padding:6px 12px;border-radius:20px;font-size:14px;cursor:pointer;" title="Paramètres">⚙️</button>
+  </div>
+</div>
+
+<!-- Modal Paramètres -->
+<div id="settings-modal" onclick="if(event.target===this)closeSettings()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:18px;padding:28px 24px;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="text-align:center;margin-bottom:22px;">
+      <div style="width:64px;height:64px;background:linear-gradient(135deg,#FF6B9D,#FF8C42);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:30px;">👤</div>
+      <div style="font-weight:700;font-size:15px;color:#333;word-break:break-all;" id="settings-email">—</div>
+      <div style="font-size:12px;color:#999;margin-top:4px;" id="settings-connected-lbl">Connectée</div>
+    </div>
+    <button onclick="toggleLang();closeSettings();" style="width:100%;padding:13px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;color:#2563EB;" id="lang-settings-btn">🌍 Changer la langue → EN</button>
+    <button onclick="doLogout()" style="width:100%;padding:13px;background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;color:#DC2626;margin-bottom:10px;">🚪 Déconnexion</button>
+    <button onclick="closeSettings()" style="width:100%;padding:11px;background:#F5F5F5;border:none;border-radius:12px;font-size:13px;cursor:pointer;color:#666;">✕ Fermer</button>
+  </div>
+</div>
+
+<div class="kids-overview">
+  <div class="kids-overview-title"><span id="all-kids-txt">👶 Tous les enfants</span></div>
+  <div class="kids-grid" id="kids-grid"></div>
+</div>
+
+<div class="global-summary">
+  <div class="g-card"><div class="g-num" id="s-done" style="color:#4CAF50">0</div><div class="g-label"><span id="g-done-txt">✅ Faites</span></div></div>
+  <div class="g-card"><div class="g-num" id="s-total" style="color:#FF8C42">0</div><div class="g-label"><span id="g-total-txt">📋 Total</span></div></div>
+  <div class="g-card"><div class="g-num" id="s-stars" style="color:#FFC107">0</div><div class="g-label"><span id="g-stars-txt">⭐ Étoiles</span></div></div>
+  <div class="g-card"><div class="g-num" id="s-pct" style="color:#9C27B0">0%</div><div class="g-label">📊 Progrès</div></div>
+</div>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" id="tab-taches" onclick="showPage('taches')">📋 <span id="tab-taches-txt">Tâches</span></button>
+  <button class="nav-tab" id="tab-menu" onclick="showPage('menu')">🍽️ <span id="tab-menu-txt">Menu du jour</span></button>
+  <button class="nav-tab" id="tab-bday" onclick="showPage('bday')">🎂 <span id="tab-bday-txt">Anniversaires</span></button>
+</div>
+
+<div id="page-taches">
+<div style="padding:16px;max-width:720px;margin:0 auto;">
+  <div class="child-card">
+    <div class="avatar-big" id="av-big">😊</div>
+    <div class="child-info">
+      <div class="child-name-row">
+        <div class="child-name-big" id="child-name-big">--</div>
+        <span class="age-badge" id="age-badge">2 ans</span>
+      </div>
+      <div class="stars-row">
+        <span id="stars-display" style="font-size:16px;">⭐</span>
+        <span class="stars-count" id="stars-count"></span>
+      </div>
+      <div class="reward-progress" id="reward-progress"></div>
+    </div>
+    <button class="edit-btn" onclick="openEdit()"><span class='edit-btn-txt'>✏️ Modifier</span></button>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-label"><span id="prog-txt">0 / 0 tâches</span><span id="prog-pct-txt">0%</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="section-title">📋 Tâches du jour</div>
+  <div class="tasks-grid" id="task-list"></div>
+
+  <div class="rewards-section">
+    <div class="rewards-title">🏆 Récompenses de <span id="reward-child-name">--</span></div>
+    <div class="rewards-grid" id="rewards-grid"></div>
+  </div>
+
+  <div class="add-box">
+    <h3>➕ Ajouter une tâche</h3>
+    <div class="add-row">
+      <input type="text" id="new-name" placeholder="Ex: Ranger ses jouets..." />
+      <select id="new-time"><option>Matin</option><option>Midi</option><option>Après-midi</option><option>Soir</option></select>
+      <select id="new-stars">
+        <option value="1">⭐ 1 étoile</option>
+        <option value="2">⭐⭐ 2 étoiles</option>
+        <option value="3">⭐⭐⭐ 3 étoiles</option>
+      </select>
+      <button onclick="addTask()">Ajouter</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-reset" onclick="resetChild()">↺ Réinitialiser cet enfant</button>
+    <button class="btn-reset-all" onclick="resetAll()">↺ Réinitialiser tous</button>
+  </div>
+</div><!-- fin wrapper interne -->
+</div><!-- fin main -->
+</div><!-- fin page-taches -->
+
+<!-- PAGE MENU DU JOUR -->
+<div id="page-menu" style="display:none;">
+<div class="menu-page">
+
+  <div class="menu-date-bar">
+    <div>
+      <div class="menu-date-title">🍽️ Menu du jour</div>
+      <div class="menu-date-sub" id="menu-date-sub"></div>
+    </div>
+  </div>
+
+  <div class="menu-nav" id="menu-day-nav"></div>
+
+  <!-- Collation AM -->
+  <div class="menu-section">
+    <div class="menu-section-header">
+      <span class="menu-section-icon">🍎</span>
+      <span class="menu-section-title">Collation du matin</span>
+      <span class="menu-section-time" style="background:#FFF3E0;color:#E65100;">9h00 – 9h30</span>
+    </div>
+    <div id="menu-collation-am"></div>
+    <div class="menu-add-row">
+      <input type="text" id="add-collation-am" placeholder="Ex: Compote de pommes, Céréales..." />
+      <button onclick="addMenuItem('collation_am','add-collation-am')">+ Ajouter</button>
+    </div>
+  </div>
+
+  <!-- Dîner -->
+  <div class="menu-section">
+    <div class="menu-section-header">
+      <span class="menu-section-icon">🥗</span>
+      <span class="menu-section-title">Dîner</span>
+      <span class="menu-section-time" style="background:#E8F5E9;color:#2E7D32;">11h30 – 12h30</span>
+    </div>
+    <div id="menu-diner"></div>
+    <div class="menu-add-row">
+      <input type="text" id="add-diner" placeholder="Ex: Pâtes sauce tomate, Salade..." />
+      <button onclick="addMenuItem('diner','add-diner')">+ Ajouter</button>
+    </div>
+  </div>
+
+  <!-- Collation PM -->
+  <div class="menu-section">
+    <div class="menu-section-header">
+      <span class="menu-section-icon">🧃</span>
+      <span class="menu-section-title">Collation de l'après-midi</span>
+      <span class="menu-section-time" style="background:#E3F2FD;color:#1565C0;">14h30 – 15h00</span>
+    </div>
+    <div id="menu-collation-pm"></div>
+    <div class="menu-add-row">
+      <input type="text" id="add-collation-pm" placeholder="Ex: Yogourt, Fruits frais..." />
+      <button onclick="addMenuItem('collation_pm','add-collation-pm')">+ Ajouter</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="celebrate" id="celebrate">
+  <div class="celebrate-icon" id="cel-icon">🎉</div>
+  <div class="celebrate-text" id="cel-text">Bravo !</div>
+  <div class="celebrate-sub" id="cel-sub"></div>
+  <button class="celebrate-close" onclick="closeCelebrate()">Super ! 👍</button>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>✏️ Modifier l'enfant</h2>
+    <input type="text" id="edit-name" placeholder="Prénom..." />
+    <select id="edit-age">
+      <option value="2">2 ans</option><option value="3">3 ans</option>
+      <option value="4">4 ans</option><option value="5">5 ans</option>
+    </select>
+    <select id="edit-avatar">
+      <option value="😊">😊 Sourire</option><option value="🦁">🦁 Lion</option>
+      <option value="🐻">🐻 Ourson</option><option value="🐸">🐸 Grenouille</option>
+      <option value="🦊">🦊 Renard</option><option value="🐨">🐨 Koala</option>
+      <option value="🐯">🐯 Tigre</option><option value="🐼">🐼 Panda</option>
+      <option value="🦋">🦋 Papillon</option><option value="🌈">🌈 Arc-en-ciel</option>
+    </select>
+    <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">🎂 Date d'anniversaire</label>
+    <input type="date" id="edit-bday" />
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-ok" onclick="confirmEdit()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE ANNIVERSAIRES -->
+<div id="page-bday" style="display:none;">
+<div class="bday-page">
+
+  <div class="bday-banner">
+    <div>
+      <div class="bday-banner-title"><span id="bday-banner-title">🎂 Anniversaires des enfants</span></div>
+      <div class="bday-banner-sub" id="bday-banner-sub">Compte à rebours et alertes</div>
+    </div>
+    <span style="font-size:40px;">🎈</span>
+  </div>
+
+  <div id="bday-alerts"></div>
+
+  <div class="bday-grid" id="bday-grid"></div>
+
+</div>
+</div>
+
+<script>
+const COLORS=['#FF6B9D','#FF8C42','#9C27B0','#2196F3','#4CAF50','#FF5722'];
+const DEFAULT_TASKS=[
+  {name:"Dire bonjour en arrivant",icon:"👋",time:"Matin",stars:1},
+  {name:"Se laver les mains",icon:"🧼",time:"Matin",stars:1},
+  {name:"Ranger son manteau",icon:"🧥",time:"Matin",stars:1},
+  {name:"Manger son repas",icon:"🍽️",time:"Midi",stars:2},
+  {name:"Faire la sieste",icon:"😴",time:"Après-midi",stars:2},
+  {name:"Ranger ses jouets",icon:"🧸",time:"Après-midi",stars:2},
+  {name:"Faire un dessin",icon:"🎨",time:"Après-midi",stars:1},
+  {name:"Écouter la lecture",icon:"📖",time:"Matin",stars:1},
+  {name:"Se brosser les dents",icon:"🦷",time:"Midi",stars:2},
+  {name:"Dire merci et svp",icon:"😇",time:"Matin",stars:1},
+];
+const REWARDS=[
+  {id:"sticker",name:"Autocollant",icon:"🌟",cost:3,msg:"Tu as gagné un autocollant !"},
+  {id:"story",name:"Histoire bonus",icon:"📚",cost:5,msg:"Une histoire rien que pour toi !"},
+  {id:"chef",name:"Chef du jour",icon:"👑",cost:8,msg:"Tu es le chef du jour !"},
+  {id:"game",name:"Jeu spécial",icon:"🎮",cost:10,msg:"Tu choisis le jeu aujourd\'hui !"},
+  {id:"treat",name:"Petite gâterie",icon:"🍪",cost:12,msg:"Une surprise pour toi !"},
+  {id:"diploma",name:"Diplôme",icon:"🏆",cost:20,msg:"Félicitations, tu as ton diplôme !"},
+];
+const AVATARS=['😊','🦁','🐻','🐸','🦊','🐨'];
+const AGES=[2,3,4,4,5,3];
+
+function makeTasks(){return DEFAULT_TASKS.map(t=>({...t,done:false}));}
+function makeChildren(){
+  return Array.from({length:6},(_,i)=>({
+    name:`Enfant ${i+1}`,age:AGES[i],avatar:AVATARS[i],
+    tasks:makeTasks(),totalStars:0,claimedRewards:[],bday:''
+  }));
+}
+
+let state={children:makeChildren(),active:0};
+let editingIdx=0;
+
+function save(){try{localStorage.setItem('garderie_v4',JSON.stringify(state));}catch(e){}}
+function load(){try{const s=localStorage.getItem('garderie_v4');if(s)state=JSON.parse(s);}catch(e){}}
+
+function todayStars(c){return c.tasks.filter(t=>t.done).reduce((s,t)=>s+(t.stars||1),0);}
+function doneTasks(c){return c.tasks.filter(t=>t.done).length;}
+function col(i){return COLORS[i%COLORS.length];}
+
+function renderDate(){
+  document.getElementById('date-label').textContent=new Date().toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+}
+
+function renderKidsGrid(){
+  document.getElementById('kids-grid').innerHTML=state.children.map((c,i)=>{
+    const done=doneTasks(c);
+    const total=c.tasks.length;
+    const pct=total?Math.round(done/total*100):0;
+    const stars=todayStars(c);
+    const allDone=done===total&&total>0;
+    const isActive=i===state.active;
+    const color=col(i);
+    return `<div class="kid-card${isActive?' active':''}" onclick="setChild(${i})"
+      style="border-color:${isActive?color:'#FFD4B0'};${isActive?'box-shadow:0 4px 18px '+color+'55;background:'+color+'11;':''}">
+      ${allDone?'<div class="kid-all-done">✓</div>':''}
+      <div class="kid-avatar">${c.avatar}</div>
+      <div class="kid-name">${c.name}</div>
+      <div class="kid-age">${c.age} ans</div>
+      <div class="kid-stars">⭐ ${stars}</div>
+      <div class="kid-prog-bar"><div class="kid-prog-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="kid-tasks-count">${done}/${total} tâches</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSummary(){
+  let done=0,total=0,stars=0;
+  state.children.forEach(c=>{done+=doneTasks(c);total+=c.tasks.length;stars+=todayStars(c);});
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-stars').textContent=stars;
+  document.getElementById('s-pct').textContent=total?Math.round(done/total*100)+'%':'0%';
+}
+
+function renderChildDetail(){
+  const c=state.children[state.active];
+  const color=col(state.active);
+  const done=doneTasks(c);
+  const total=c.tasks.length;
+  const pct=total?Math.round(done/total*100):0;
+  const s=todayStars(c);
+  const totalSoFar=(c.totalStars||0)+s;
+
+  document.getElementById('av-big').textContent=c.avatar;
+  document.getElementById('av-big').style.background=color+'22';
+  document.getElementById('av-big').style.borderColor=color;
+  document.getElementById('child-name-big').textContent=c.name;
+  document.getElementById('age-badge').textContent=c.age+' ans';
+  document.getElementById('reward-child-name').textContent=c.name;
+  document.getElementById('stars-display').textContent=s>0?'⭐'.repeat(Math.min(s,10)):'—';
+  document.getElementById('stars-count').textContent=s+' étoile'+(s!==1?'s':'')+' aujourd\'hui · '+totalSoFar+' au total';
+
+  const next=REWARDS.find(r=>!c.claimedRewards.includes(r.id)&&r.cost>totalSoFar);
+  document.getElementById('reward-progress').textContent=next?
+    `Encore ${next.cost-totalSoFar} étoile${next.cost-totalSoFar>1?'s':''} pour : ${next.icon} ${next.name}`:
+    '🎉 Toutes les récompenses débloquées !';
+
+  document.getElementById('prog-txt').textContent=`${done} / ${total} tâches`;
+  document.getElementById('prog-pct-txt').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-fill').style.background=color;
+
+  const list=document.getElementById('task-list');
+  if(!c.tasks.length){list.innerHTML='<div class="empty-msg">Aucune tâche ! Ajoutes-en une ci-dessous 👇</div>';return;}
+  list.innerHTML=c.tasks.map((t,i)=>`
+    <div class="task-item${t.done?' done':''}" onclick="toggle(${i})">
+      <div class="check-big${t.done?' checked':''}">${t.done?'✓':''}</div>
+      <span class="task-icon-big">${t.icon}</span>
+      <div class="task-info">
+        <div class="task-name">${t.name}</div>
+        <div style="font-size:13px;margin-top:2px;">${'⭐'.repeat(t.stars||1)}</div>
+        <span class="task-time-pill">${t.time}</span>
+      </div>
+      <button class="del-btn" onclick="event.stopPropagation();delTask(${i})">×</button>
+    </div>`).join('');
+
+  document.getElementById('rewards-grid').innerHTML=REWARDS.map(r=>{
+    const claimed=c.claimedRewards.includes(r.id);
+    const unlocked=totalSoFar>=r.cost;
+    let cls='reward-card';
+    let status=`<div class="reward-status" style="color:#bbb">${r.cost}⭐</div>`;
+    if(claimed){cls+=' claimed';status='<div class="reward-status" style="color:#4CAF50">✓ Obtenu !</div>';}
+    else if(unlocked){cls+=' unlocked';status='<div class="reward-status" style="color:#FF8C42">🎉 Dispo !</div>';}
+    return `<div class="${cls}" onclick="claimReward('${r.id}','${r.icon}','${r.name}','${r.msg}',${unlocked},${claimed})">
+      <div class="reward-icon">${r.icon}</div>
+      <div class="reward-name">${r.name}</div>
+      <div class="reward-cost">${r.cost} ⭐</div>${status}
+    </div>`;
+  }).join('');
+}
+
+function render(){renderDate();renderKidsGrid();renderSummary();renderChildDetail();}
+function setChild(i){state.active=i;render();}
+
+function toggle(i){
+  const c=state.children[state.active];
+  c.tasks[i].done=!c.tasks[i].done;
+  if(c.tasks[i].done){const t=c.tasks[i];showCelebrate(t.icon,t.name,t.stars||1);}
+  save();render();
+}
+
+function showCelebrate(icon,name,stars){
+  const msgs=["Bravo ! 🎊","Super ! 🌟","Excellent ! 🥳","Fantastique ! 🎉","Génial ! ✨"];
+  document.getElementById('cel-icon').textContent=icon;
+  document.getElementById('cel-text').textContent=msgs[Math.floor(Math.random()*msgs.length)];
+  document.getElementById('cel-sub').textContent=`"${name}" — +${'⭐'.repeat(Math.min(stars,5))}`;
+  const el=document.getElementById('celebrate');
+  el.style.display='block';el.classList.add('show');
+  setTimeout(()=>closeCelebrate(),3000);
+}
+function closeCelebrate(){document.getElementById('celebrate').style.display='none';}
+
+function claimReward(id,icon,name,msg,unlocked,claimed){
+  if(claimed){alert(`${icon} ${name} : déjà obtenu !`);return;}
+  if(!unlocked){alert(`Pas encore assez d'étoiles pour ${name} !`);return;}
+  if(!confirm(`Donner la récompense : ${icon} ${name} ?`))return;
+  const c=state.children[state.active];
+  if(!c.claimedRewards)c.claimedRewards=[];
+  c.claimedRewards.push(id);
+  c.totalStars=(c.totalStars||0)+todayStars(c);
+  save();render();
+  showCelebrate(icon,name+' !',0);
+  document.getElementById('cel-sub').textContent=msg;
+}
+
+function delTask(i){
+  if(!confirm('Supprimer cette tâche ?'))return;
+  state.children[state.active].tasks.splice(i,1);save();render();
+}
+
+function addTask(){
+  const name=document.getElementById('new-name').value.trim();
+  const time=document.getElementById('new-time').value;
+  const stars=parseInt(document.getElementById('new-stars').value);
+  if(!name)return;
+  const pm=currentLang==='fr'?'Après-midi':'Afternoon';const iconMap={Matin:'🌅',Midi:'🍽️',[pm]:'🎨',Soir:'🌙'};
+  state.children[state.active].tasks.push({name,icon:iconMap[time]||'📌',time,stars,done:false});
+  document.getElementById('new-name').value='';save();render();
+}
+
+function resetChild(){
+  const c=state.children[state.active];
+  if(!confirm('Réinitialiser les tâches de '+c.name+' ?'))return;
+  c.totalStars=(c.totalStars||0)+todayStars(c);
+  c.tasks.forEach(t=>t.done=false);save();render();
+}
+function resetAll(){
+  if(!confirm('Réinitialiser les tâches de tous les enfants ?'))return;
+  state.children.forEach(c=>{c.totalStars=(c.totalStars||0)+todayStars(c);c.tasks.forEach(t=>t.done=false);});
+  save();render();
+}
+
+function openEdit(){
+  editingIdx=state.active;
+  const c=state.children[editingIdx];
+  document.getElementById('edit-name').value=c.name;
+  document.getElementById('edit-age').value=c.age;
+  document.getElementById('edit-avatar').value=c.avatar;
+  document.getElementById('edit-bday').value=c.bday||'';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('edit-name').focus(),100);
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function confirmEdit(){
+  const name=document.getElementById('edit-name').value.trim();
+  if(!name)return;
+  state.children[editingIdx].name=name;
+  state.children[editingIdx].age=parseInt(document.getElementById('edit-age').value);
+  state.children[editingIdx].avatar=document.getElementById('edit-avatar').value;
+  state.children[editingIdx].bday=document.getElementById('edit-bday').value;
+  closeModal();save();render();
+}
+
+document.getElementById('edit-name').addEventListener('keydown',e=>{if(e.key==='Enter')confirmEdit();});
+document.getElementById('new-name').addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+
+// === MENU DU JOUR ===
+const DAYS=['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+const FOOD_ICONS={'pomme':'🍎','banane':'🍌','orange':'🍊','raisin':'🍇','fraise':'🍓','melon':'🍈','pêche':'🍑','poire':'🍐','kiwi':'🥝','carotte':'🥕','brocoli':'🥦','salade':'🥗','soupe':'🍲','pâtes':'🍝','riz':'🍚','pain':'🍞','fromage':'🧀','yogourt':'🥛','lait':'🥛','jus':'🧃','eau':'💧','céréales':'🥣','compote':'🍎','biscuit':'🍪','craquelin':'🍘','muffin':'🧁','poulet':'🍗','poisson':'🐟','oeufs':'🥚','sandwich':'🥪','pizza':'🍕','burger':'🍔'};
+
+function getFoodIcon(name){
+  const n=name.toLowerCase();
+  for(const[k,v]of Object.entries(FOOD_ICONS)){if(n.includes(k))return v;}
+  return '🍽️';
+}
+
+function getMenuKey(day,slot){return `menu_${day}_${slot}`;}
+
+function loadMenu(day,slot){
+  try{const s=localStorage.getItem(getMenuKey(day,slot));return s?JSON.parse(s):[];}catch(e){return[];}
+}
+function saveMenu(day,slot,items){
+  try{localStorage.setItem(getMenuKey(day,slot),JSON.stringify(items));}catch(e){}
+}
+
+let activeMenuDay=DAYS[new Date().getDay()-1]||DAYS[0];
+
+function renderMenuDayNav(){
+  document.getElementById('menu-day-nav').innerHTML=DAYS.map(d=>`
+    <button class="menu-day-btn${d===activeMenuDay?' active':''}" onclick="setMenuDay('${d}')">${d}</button>
+  `).join('');
+}
+
+function renderMenuSlot(slot,containerId){
+  const items=loadMenu(activeMenuDay,slot);
+  const el=document.getElementById(containerId);
+  if(!items.length){el.innerHTML='<div class="menu-empty"><span class="no-item-txt">Rien de prévu — ajoute un aliment 👇</span></div>';return;}
+  el.innerHTML=items.map((item,i)=>`
+    <div class="menu-item-row">
+      <span class="menu-item-emoji">${getFoodIcon(item)}</span>
+      <span class="menu-item-name">${item}</span>
+      <button class="menu-del-btn" onclick="delMenuItem('${slot}',${i})">×</button>
+    </div>`).join('');
+}
+
+function renderMenu(){
+  const d=new Date();
+  document.getElementById('menu-date-sub').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  renderMenuDayNav();
+  renderMenuSlot('collation_am','menu-collation-am');
+  renderMenuSlot('diner','menu-diner');
+  renderMenuSlot('collation_pm','menu-collation-pm');
+}
+
+function setMenuDay(day){activeMenuDay=day;renderMenu();}
+
+function addMenuItem(slot,inputId){
+  const inp=document.getElementById(inputId);
+  const val=inp.value.trim();
+  if(!val)return;
+  const items=loadMenu(activeMenuDay,slot);
+  items.push(val);
+  saveMenu(activeMenuDay,slot,items);
+  inp.value='';
+  renderMenu();
+}
+
+function delMenuItem(slot,idx){
+  const items=loadMenu(activeMenuDay,slot);
+  items.splice(idx,1);
+  saveMenu(activeMenuDay,slot,items);
+  renderMenu();
+}
+
+['add-collation-am','add-diner','add-collation-pm'].forEach((id,i)=>{
+  const slots=['collation_am','diner','collation_pm'];
+  document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addMenuItem(slots[i],id);});
+});
+
+// === ANNIVERSAIRES ===
+function daysUntilBday(bdayStr){
+  if(!bdayStr)return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  const bday=new Date(bdayStr);
+  const next=new Date(today.getFullYear(),bday.getMonth(),bday.getDate());
+  if(next<today)next.setFullYear(today.getFullYear()+1);
+  return Math.round((next-today)/(1000*60*60*24));
+}
+
+function bdayFormatted(bdayStr){
+  if(!bdayStr)return '';
+  const d=new Date(bdayStr);
+  return d.toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
+}
+
+function nextAge(bdayStr,currentAge){
+  if(!bdayStr)return currentAge;
+  const today=new Date();today.setHours(0,0,0,0);
+  const bday=new Date(bdayStr);
+  const next=new Date(today.getFullYear(),bday.getMonth(),bday.getDate());
+  if(next<today)next.setFullYear(today.getFullYear()+1);
+  const birthYear=bday.getFullYear();
+  return next.getFullYear()-birthYear;
+}
+
+function renderBday(){
+  const today=new Date();today.setHours(0,0,0,0);
+  document.getElementById('bday-banner-sub').textContent=today.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const alerts=[];
+  const cards=state.children.map((c,i)=>{
+    const days=daysUntilBday(c.bday);
+    let countdownClass='far',countdownTxt='Aucune date';
+    if(days===null){countdownTxt='Date non saisie';}
+    else if(days===0){countdownTxt="🎉 C'est aujourd\'hui !";countdownClass='today2';alerts.push({c,i,days});}
+    else if(days<=7){countdownTxt=`Dans ${days} jour${days>1?'s':''}`;countdownClass=days<=3?'soon2':'week';alerts.push({c,i,days});}
+    else{countdownTxt=`Dans ${days} jours`;}
+
+    const na=c.bday?nextAge(c.bday,c.age):c.age;
+    const cardClass=days===0?'bday-card today-bday':days!==null&&days<=7?'bday-card soon':'bday-card';
+
+    return `<div class="${cardClass}">
+      <div class="bday-avatar" style="background:${col(i)}22;border:2px solid ${col(i)};">${c.avatar}</div>
+      <div class="bday-info">
+        <div class="bday-name">${c.name}</div>
+        <div class="bday-date">${c.bday?'🎂 '+bdayFormatted(c.bday):'<span class="bday-no-date">Pas encore de date</span>'}</div>
+        ${c.bday?`<div class="bday-age-next">Aura ${na} ans</div>`:''}
+        <span class="bday-countdown ${countdownClass}">${countdownTxt}</span>
+      </div>
+      <button class="bday-edit-btn" onclick="openEditFromBday(${i})"><span class='edit-btn-txt'>✏️ Modifier</span></button>
+    </div>`;
+  });
+
+  document.getElementById('bday-grid').innerHTML=cards.join('');
+
+  const alertsEl=document.getElementById('bday-alerts');
+  if(!alerts.length){alertsEl.innerHTML='';return;}
+  alerts.sort((a,b)=>a.days-b.days);
+  alertsEl.innerHTML=alerts.map(({c,i,days})=>{
+    const isToday=days===0;
+    return `<div class="bday-alert${isToday?' today':''}">
+      <div class="bday-alert-icon">${isToday?'🎉':'⏰'}</div>
+      <div class="bday-alert-text">
+        <div class="bday-alert-name">${isToday?`🎂 Joyeux anniversaire ${c.name} !`:`Anniversaire de ${c.name} bientôt !`}</div>
+        <div class="bday-alert-days">${isToday?"C'est aujourd\'hui ! Pensez à célébrer 🎈":`Dans ${days} jour${days>1?'s':''} — préparez la célébration !`}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEditFromBday(i){
+  state.active=i;
+  openEdit();
+}
+
+// === NAVIGATION ONGLETS ===
+function showPage(page){
+  document.getElementById('page-taches').style.display=page==='taches'?'block':'none';
+  document.getElementById('page-menu').style.display=page==='menu'?'block':'none';
+  document.getElementById('page-bday').style.display=page==='bday'?'block':'none';
+  document.getElementById('tab-taches').classList.toggle('active',page==='taches');
+  document.getElementById('tab-menu').classList.toggle('active',page==='menu');
+  document.getElementById('tab-bday').classList.toggle('active',page==='bday');
+  if(page==='menu')renderMenu();
+  if(page==='bday')renderBday();
+}
+
+function save(){
+  try{localStorage.setItem('garderie_v4',JSON.stringify(state));}catch(e){}
+  if(db && currentUser){
+    db.collection('garderies').doc(currentUser.uid)
+      .set({state:JSON.stringify(state),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+      .catch(e=>console.log('Firebase save error',e));
+  }
+}
+// load and render handled by Firebase auth
+</script>
+
+</div><!-- end app-content -->
+</body>
+</html>
