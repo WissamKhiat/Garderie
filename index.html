@@ -364,17 +364,14 @@ function initPushNotifications(role){
         .catch(function(e){ console.log('getToken error', e); });
 
       // App ouverte au premier plan : afficher une notification locale
-      PUSH.messaging.onMessage(function(payload){
-        try {
-          var n = (payload && payload.notification) || {};
-          if(Notification.permission === 'granted'){
-            new Notification(n.title || 'Mini Monde', { body: n.body || '', icon: 'icon-192.png' });
-          }
-        } catch(e){ console.log('onMessage error', e); }
-      });
-    }).catch(function(e){ console.log('SW register error', e); });
-  }).catch(function(e){ console.log('permission error', e); });
-}
+ PUSH.messaging.onMessage(function(payload){
+  try {
+    var d = (payload && payload.data) || {};
+    if(Notification.permission === 'granted'){
+      new Notification(d.title || 'Mini Monde', { body: d.body || '', icon: 'icon-192.png' });
+    }
+  } catch(e){ console.log('onMessage error', e); }
+});
 
 /* ═══════════════════════════════════════════════════
    EMAILJS — envoi de courriels aux parents
